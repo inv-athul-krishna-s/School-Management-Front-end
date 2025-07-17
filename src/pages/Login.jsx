@@ -1,3 +1,13 @@
+// 📁 src/pages/Login.jsx
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Alert,
+  Paper,
+} from "@mui/material";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
@@ -18,40 +28,56 @@ const Login = () => {
   };
 
   return (
-    <div className="position-absolute top-50 start-50 translate-middle w-100" style={{ maxWidth: "400px" }}>
-      <div className="card shadow border-0 p-4">
-        <h3 className="text-center text-primary fw-bold mb-4">Login</h3>
+    <Container maxWidth="xs">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <Paper elevation={3} sx={{ p: 4, width: "100%", borderRadius: 2 }}>
+          <Typography variant="h5" textAlign="center" color="primary" mb={2}>
+            Login
+          </Typography>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Username"
+          <form onSubmit={handleSubmit}>
+            <TextField
+              label="Username"
+              fullWidth
+              margin="normal"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-          </div>
-          <div className="mb-3">
-            <input
+            <TextField
+              label="Password"
               type="password"
-              className="form-control"
-              placeholder="Password"
+              fullWidth
+              margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
-          {error && <p className="text-danger text-center small">{error}</p>}
-          <div className="d-grid">
-            <button type="submit" className="btn btn-primary fw-semibold">
+
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              sx={{ mt: 3 }}
+            >
               Login
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            </Button>
+          </form>
+        </Paper>
+      </Box>
+    </Container>
   );
 };
 

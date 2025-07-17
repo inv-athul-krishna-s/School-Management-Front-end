@@ -1,14 +1,35 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { useAuth } from "../context/AuthContext";
+// 📁 src/pages/RegisterUser.jsx
+import { useEffect, useState } from "react";
+import axios from "../api/axios";
+import {
+  TextField,
+  Button,
+  MenuItem,
+  Box,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 
 const RegisterUser = () => {
-  const { accessToken } = useAuth();
-  const [role, setRole] = useState("student");
-  const [form, setForm] = useState({
+  const [role, setRole] = useState("teacher");
+  const [teachers, setTeachers] = useState([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
+
+  const [teacherData, setTeacherData] = useState({
     username: "",
     email: "",
-    password: "",
+    first_name: "",
+    last_name: "",
+    phone: "",
+    subject_specialization: "",
+    employee_id: "",
+    date_of_joining: "",
+    status: "active",
+  });
+
+  const [studentData, setStudentData] = useState({
+    username: "",
+    email: "",
     first_name: "",
     last_name: "",
     phone: "",
@@ -16,142 +37,193 @@ const RegisterUser = () => {
     student_class: "",
     date_of_birth: "",
     admission_date: "",
-    subject_specialization: "",
-    employee_id: "",
-    date_of_joining: "",
+    status: "active",
     assigned_teacher: "",
   });
-  const [teachers, setTeachers] = useState([]);
 
   useEffect(() => {
     if (role === "student") {
-      axios.get("http://localhost:8000/api/teachers/", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }).then((res) => setTeachers(res.data)).catch(console.error);
+      setLoadingTeachers(true);
+      axios
+        .get("/teachers/", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        .then((res) => {
+          // ✅ Fix here: use `results` from paginated response
+          setTeachers(res.data.results || []);
+          setLoadingTeachers(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching teachers:", err);
+          setLoadingTeachers(false);
+        });
     }
-  }, [role, accessToken]);
+  }, [role]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleTeacherSubmit = async (e) => {
     e.preventDefault();
-
     const payload = {
       user: {
-        username: form.username,
-        email: form.email,
-        password: form.password,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        phone: form.phone,
+        username: teacherData.username,
+        email: teacherData.email,
+        first_name: teacherData.first_name,
+        last_name: teacherData.last_name,
+        phone: teacherData.phone,
       },
-      phone: form.phone,
-      status: "active",
+      phone: teacherData.phone,
+      subject_specialization: teacherData.subject_specialization,
+      employee_id: teacherData.employee_id,
+      date_of_joining: teacherData.date_of_joining,
+      status: teacherData.status,
     };
 
-    if (role === "student") {
-      Object.assign(payload, {
-        roll_number: form.roll_number,
-        student_class: form.student_class,
-        date_of_birth: form.date_of_birth,
-        admission_date: form.admission_date,
-        assigned_teacher: form.assigned_teacher,
-      });
-    } else {
-      Object.assign(payload, {
-        subject_specialization: form.subject_specialization,
-        employee_id: form.employee_id,
-        date_of_joining: form.date_of_joining,
-      });
-    }
-
     try {
-      const endpoint = role === "student" ? "/api/students/" : "/api/teachers/";
-      await axios.post(`http://localhost:8000${endpoint}`, payload, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      await axios.post("/teachers/", payload, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
-      alert(`${role} registered successfully`);
+      alert("Teacher registered successfully");
     } catch (err) {
       console.error(err);
-      alert("Registration failed. Check console for details.");
+      alert("Error registering teacher");
+    }
+  };
+
+  const handleStudentSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      user: {
+        username: studentData.username,
+        email: studentData.email,
+        first_name: studentData.first_name,
+        last_name: studentData.last_name,
+        phone: studentData.phone,
+      },
+      phone: studentData.phone,
+      roll_number: studentData.roll_number,
+      student_class: studentData.student_class,
+      date_of_birth: studentData.date_of_birth,
+      admission_date: studentData.admission_date,
+      status: studentData.status,
+      assigned_teacher: studentData.assigned_teacher,
+    };
+
+    try {
+      await axios.post("/students/", payload, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      alert("Student registered successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Error registering student");
     }
   };
 
   return (
-    <div className="container py-4">
-      <h3 className="mb-4">Register New {role === "teacher" ? "Teacher" : "Student"}</h3>
-      <form className="card p-4 shadow-sm" onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">Role</label>
-          <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-          </select>
-        </div>
+    <Box maxWidth={600} mx="auto" my={4} p={3} boxShadow={3} bgcolor="#fff" borderRadius={2}>
+      <Typography variant="h5" gutterBottom>
+        Register New {role.charAt(0).toUpperCase() + role.slice(1)}
+      </Typography>
 
-        <div className="row g-3">
-          <div className="col-md-6">
-            <input name="first_name" placeholder="First Name" className="form-control" onChange={handleChange} required />
-          </div>
-          <div className="col-md-6">
-            <input name="last_name" placeholder="Last Name" className="form-control" onChange={handleChange} required />
-          </div>
-          <div className="col-md-6">
-            <input name="username" placeholder="Username" className="form-control" onChange={handleChange} required />
-          </div>
-          <div className="col-md-6">
-            <input name="email" type="email" placeholder="Email" className="form-control" onChange={handleChange} required />
-          </div>
-          <div className="col-md-6">
-            <input name="password" type="password" placeholder="Password" className="form-control" onChange={handleChange} required />
-          </div>
-          <div className="col-md-6">
-            <input name="phone" placeholder="Phone" className="form-control" onChange={handleChange} required />
-          </div>
+      {/* Role Selector */}
+      <TextField
+        select
+        fullWidth
+        label="Select Role"
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+        margin="normal"
+      >
+        <MenuItem value="teacher">Teacher</MenuItem>
+        <MenuItem value="student">Student</MenuItem>
+      </TextField>
 
-          {role === "student" ? (
-            <>
-              <div className="col-md-6">
-                <input name="roll_number" placeholder="Roll Number" className="form-control" onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <input name="student_class" placeholder="Class" className="form-control" onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <input name="date_of_birth" type="date" className="form-control" onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <input name="admission_date" type="date" className="form-control" onChange={handleChange} />
-              </div>
-              <div className="col-md-12">
-                <select name="assigned_teacher" className="form-select" onChange={handleChange}>
-                  <option value="">Assign Teacher</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>{t.user.username}</option>
-                  ))}
-                </select>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="col-md-6">
-                <input name="employee_id" placeholder="Employee ID" className="form-control" onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <input name="subject_specialization" placeholder="Subject Specialization" className="form-control" onChange={handleChange} />
-              </div>
-              <div className="col-md-6">
-                <input name="date_of_joining" type="date" className="form-control" onChange={handleChange} />
-              </div>
-            </>
-          )}
-        </div>
+      {/* TEACHER FORM */}
+      {role === "teacher" && (
+        <form onSubmit={handleTeacherSubmit}>
+          {Object.keys(teacherData).map((key) => (
+            <TextField
+              key={key}
+              fullWidth
+              label={key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+              type={key.includes("date") ? "date" : "text"}
+              value={teacherData[key]}
+              onChange={(e) =>
+                setTeacherData({ ...teacherData, [key]: e.target.value })
+              }
+              margin="normal"
+              required
+              InputLabelProps={key.includes("date") ? { shrink: true } : {}}
+            />
+          ))}
+          <Button type="submit" variant="contained" color="primary" fullWidth>
+            Register Teacher
+          </Button>
+        </form>
+      )}
 
-        <button className="btn btn-success mt-4">Register</button>
-      </form>
-    </div>
+      {/* STUDENT FORM */}
+      {role === "student" && (
+        <form onSubmit={handleStudentSubmit}>
+          {Object.keys(studentData).map((key) => {
+            if (key === "assigned_teacher") {
+              return (
+                <TextField
+                  key={key}
+                  select
+                  fullWidth
+                  label="Assigned Teacher"
+                  value={studentData[key]}
+                  onChange={(e) =>
+                    setStudentData({ ...studentData, [key]: e.target.value })
+                  }
+                  margin="normal"
+                  required
+                >
+                  {loadingTeachers ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} />
+                    </MenuItem>
+                  ) : teachers.length > 0 ? (
+                    teachers.map((teacher) => (
+                      <MenuItem value={teacher.id} key={teacher.id}>
+                        {teacher.user?.first_name} {teacher.user?.last_name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No teachers available</MenuItem>
+                  )}
+                </TextField>
+              );
+            } else {
+              return (
+                <TextField
+                  key={key}
+                  fullWidth
+                  label={key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  type={key.includes("date") ? "date" : "text"}
+                  value={studentData[key]}
+                  onChange={(e) =>
+                    setStudentData({ ...studentData, [key]: e.target.value })
+                  }
+                  margin="normal"
+                  required
+                  InputLabelProps={key.includes("date") ? { shrink: true } : {}}
+                />
+              );
+            }
+          })}
+          <Button type="submit" variant="contained" color="primary" fullWidth>
+            Register Student
+          </Button>
+        </form>
+      )}
+    </Box>
   );
 };
 
