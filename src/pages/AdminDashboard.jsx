@@ -1,3 +1,4 @@
+import { Box, Grid, Paper, Typography, Avatar } from "@mui/material";
 import { FaUserGraduate, FaChalkboardTeacher, FaCalendarAlt } from "react-icons/fa";
 
 const AdminDashboard = () => {
@@ -5,43 +6,55 @@ const AdminDashboard = () => {
     {
       title: "Total Students",
       count: 120,
-      icon: <FaUserGraduate size={28} className="text-white" />,
-      bgColor: "bg-primary",
+      icon: <FaUserGraduate size={32} />,
+      bgColor: "#1976d2",
     },
     {
       title: "Total Teachers",
       count: 15,
-      icon: <FaChalkboardTeacher size={28} className="text-white" />,
-      bgColor: "bg-success",
+      icon: <FaChalkboardTeacher size={32} />,
+      bgColor: "#2e7d32",
     },
     {
       title: "Upcoming Exams",
       count: 3,
-      icon: <FaCalendarAlt size={28} className="text-white" />,
-      bgColor: "bg-warning",
+      icon: <FaCalendarAlt size={32} />,
+      bgColor: "#ed6c02",
     },
   ];
 
   return (
-    <div className="container py-4">
-      <h2 className="fw-bold mb-4">Dashboard</h2>
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h4" gutterBottom fontWeight="bold">
+        Dashboard
+      </Typography>
 
-      <div className="row g-4">
+      <Grid container spacing={3}>
         {cards.map((card, index) => (
-          <div className="col-md-4" key={index}>
-            <div className={`card shadow-sm text-white ${card.bgColor}`}>
-              <div className="card-body d-flex align-items-center">
-                <div className="me-3">{card.icon}</div>
-                <div>
-                  <h6 className="mb-1">{card.title}</h6>
-                  <h3 className="mb-0">{card.count}</h3>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Grid item xs={12} md={4} key={index}>
+            <Paper
+              sx={{
+                p: 3,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                backgroundColor: card.bgColor,
+                color: "#fff",
+              }}
+              elevation={3}
+            >
+              <Avatar sx={{ bgcolor: "transparent" }}>{card.icon}</Avatar>
+              <Box>
+                <Typography variant="subtitle1">{card.title}</Typography>
+                <Typography variant="h5" fontWeight="bold">
+                  {card.count}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Box>
   );
 };
 
