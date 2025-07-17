@@ -1,5 +1,6 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+
 import {
   Box,
   Drawer,
@@ -33,17 +34,28 @@ const DashboardLayout = () => {
       <CssBaseline />
 
       {/* AppBar */}
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h6" noWrap component="div">
-            Welcome, {user.username}
-          </Typography>
-          <Button color="inherit" onClick={logout}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
+ 
 
+<AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+  <Toolbar>
+    {/* Left: App/School Name */}
+    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+      School Management System
+    </Typography>
+
+    {/* Center: Welcome */}
+    <Box sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+      <Typography variant="h6" component="div">
+        Welcome, {user.username}
+      </Typography>
+    </Box>
+
+    {/* Right: Logout */}
+    <Button color="inherit" onClick={logout}>
+      Logout
+    </Button>
+  </Toolbar>
+</AppBar>
       {/* Sidebar Drawer */}
       <Drawer
         variant="permanent"

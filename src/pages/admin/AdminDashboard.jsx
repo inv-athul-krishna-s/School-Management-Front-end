@@ -1,23 +1,62 @@
-import { Box, Grid, Paper, Typography, Avatar } from "@mui/material";
+import { useEffect, useState } from "react";
+import axios from "../../api/axios";
+import { Box, Typography, Grid, Paper, Avatar } from "@mui/material";
 import { FaUserGraduate, FaChalkboardTeacher, FaCalendarAlt } from "react-icons/fa";
 
 const AdminDashboard = () => {
+  const [studentCount, setStudentCount] = useState(0);
+  const [teacherCount, setTeacherCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const token = localStorage.getItem("token");
+
+      try {
+        const studentRes = await axios.get("/students/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const students = studentRes.data.students;
+        if (Array.isArray(students)) {
+          setStudentCount(students.length);
+        }
+      } catch (err) {
+        console.error("Failed to fetch student count", err);
+      }
+
+      try {
+        const teacherRes = await axios.get("/teachers/", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const teachers = teacherRes.data.teachers || teacherRes.data; // adjust depending on API
+        if (Array.isArray(teachers)) {
+          setTeacherCount(teachers.length);
+        }
+      } catch (err) {
+        console.error("Failed to fetch teacher count", err);
+      }
+    };
+
+    fetchCounts();
+  }, []);
+
   const cards = [
     {
       title: "Total Students",
-      count: 120,
+      count: studentCount,
       icon: <FaUserGraduate size={32} />,
       bgColor: "#1976d2",
     },
     {
       title: "Total Teachers",
-      count: 15,
+      count: teacherCount,
       icon: <FaChalkboardTeacher size={32} />,
       bgColor: "#2e7d32",
     },
     {
       title: "Upcoming Exams",
-      count: 3,
+      count: 0,
       icon: <FaCalendarAlt size={32} />,
       bgColor: "#ed6c02",
     },
