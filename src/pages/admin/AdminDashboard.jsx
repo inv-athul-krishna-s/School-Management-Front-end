@@ -1,99 +1,98 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
-import { Box, Typography, Grid, Paper, Avatar } from "@mui/material";
-import { FaUserGraduate, FaChalkboardTeacher, FaCalendarAlt } from "react-icons/fa";
+
+import { useAuth } from "../../context/AuthContext";
 
 const AdminDashboard = () => {
+  const { token } = useAuth();
+
   const [studentCount, setStudentCount] = useState(0);
   const [teacherCount, setTeacherCount] = useState(0);
+  const [upcomingExamCount, setUpcomingExamCount] = useState(0);
 
   useEffect(() => {
-    const fetchCounts = async () => {
-      const token = localStorage.getItem("token");
-
-      try {
-        const studentRes = await axios.get("/students/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const students = studentRes.data.students;
-        if (Array.isArray(students)) {
-          setStudentCount(students.length);
-        }
-      } catch (err) {
-        console.error("Failed to fetch student count", err);
-      }
-
-      try {
-        const teacherRes = await axios.get("/teachers/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const teachers = teacherRes.data.teachers || teacherRes.data; // adjust depending on API
-        if (Array.isArray(teachers)) {
-          setTeacherCount(teachers.length);
-        }
-      } catch (err) {
-        console.error("Failed to fetch teacher count", err);
-      }
-    };
-
-    fetchCounts();
+    fetchDashboardData();
   }, []);
 
-  const cards = [
-    {
-      title: "Total Students",
-      count: studentCount,
-      icon: <FaUserGraduate size={32} />,
-      bgColor: "#1976d2",
-    },
-    {
-      title: "Total Teachers",
-      count: teacherCount,
-      icon: <FaChalkboardTeacher size={32} />,
-      bgColor: "#2e7d32",
-    },
-    {
-      title: "Upcoming Exams",
-      count: 0,
-      icon: <FaCalendarAlt size={32} />,
-      bgColor: "#ed6c02",
-    },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch students
+      const studentRes = await axios.get("/students/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const countStudents =
+        studentRes.data.count ||
+        studentRes.data.results?.length ||
+        studentRes.data.length ||
+        0;
+      setStudentCount(countStudents);
+
+      // Fetch teachers
+      const teacherRes = await axios.get("/teachers/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const countTeachers =
+        teacherRes.data.count ||
+        teacherRes.data.results?.length ||
+        teacherRes.data.length ||
+        0;
+      setTeacherCount(countTeachers);
+
+      // Fetch exams
+      const examRes = await axios.get("/exams/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allExams =
+        examRes.data.results || examRes.data || [];
+
+      const today = new Date();
+
+      const upcomingExams = allExams.filter((exam) => {
+        const examDate = new Date(exam.date);
+        return examDate > today;
+      });
+
+      setUpcomingExamCount(upcomingExams.length);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    }
+  };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom fontWeight="bold">
-        Dashboard
-      </Typography>
+    <div className="container mt-5">
+      <h2 className="mb-4">📊 Admin Dashboard</h2>
+      <div className="row">
+        {/* Students Card */}
+        <div className="col-md-4 mb-4">
+          <div className="card text-white bg-primary shadow">
+            <div className="card-body">
+              <h5 className="card-title">Total Students</h5>
+              <p className="card-text fs-2">{studentCount}</p>
+            </div>
+          </div>
+        </div>
 
-      <Grid container spacing={3}>
-        {cards.map((card, index) => (
-          <Grid item xs={12} md={4} key={index}>
-            <Paper
-              sx={{
-                p: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                backgroundColor: card.bgColor,
-                color: "#fff",
-              }}
-              elevation={3}
-            >
-              <Avatar sx={{ bgcolor: "transparent" }}>{card.icon}</Avatar>
-              <Box>
-                <Typography variant="subtitle1">{card.title}</Typography>
-                <Typography variant="h5" fontWeight="bold">
-                  {card.count}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+        {/* Teachers Card */}
+        <div className="col-md-4 mb-4">
+          <div className="card text-white bg-success shadow">
+            <div className="card-body">
+              <h5 className="card-title">Total Teachers</h5>
+              <p className="card-text fs-2">{teacherCount}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Upcoming Exams Card */}
+        <div className="col-md-4 mb-4">
+          <div className="card text-white bg-warning shadow">
+            <div className="card-body">
+              <h5 className="card-title">Upcoming Exams</h5>
+              <p className="card-text fs-2">{upcomingExamCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

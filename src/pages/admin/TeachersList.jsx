@@ -1,4 +1,3 @@
-//TeachersList.jsx
 import { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import {
@@ -13,7 +12,16 @@ import {
   TableRow,
   Paper,
   Pagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -21,6 +29,9 @@ const TeachersList = () => {
   const [teachers, setTeachers] = useState([]);
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(0);
+  const [students, setStudents] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -32,19 +43,47 @@ const TeachersList = () => {
         },
       });
       setTeachers(res.data.results);
-      setCount(Math.ceil(res.data.count / 10)); // assuming 10 per page
+      setCount(Math.ceil(res.data.count / 10));
     } catch (err) {
       console.error("Failed to fetch teachers:", err);
     }
   };
 
-  useEffect(() => {
-    fetchTeachers(page);
-  }, [page]);
+  const handleViewStudents = async (teacher) => {
+    try {
+      const res = await axios.get(`/teachers/${teacher.id}/students/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setStudents(res.data.results || res.data);
+      setSelectedTeacher(teacher);
+      setOpenModal(true);
+    } catch (err) {
+      console.error("Failed to fetch students:", err);
+    }
+  };
+
+  const handleDeleteTeacher = async (id) => {
+    try {
+      await axios.delete(`/teachers/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      fetchTeachers(page);
+    } catch (err) {
+      console.error("Failed to delete teacher:", err);
+    }
+  };
 
   const handlePageChange = (_, value) => {
     setPage(value);
   };
+
+  useEffect(() => {
+    fetchTeachers(page);
+  }, [page]);
 
   return (
     <Box>
@@ -74,20 +113,46 @@ const TeachersList = () => {
               <TableCell>Subject</TableCell>
               <TableCell>Employee ID</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {teachers.map((teacher, idx) => (
               <TableRow key={teacher.id}>
                 <TableCell>{(page - 1) * 10 + idx + 1}</TableCell>
-                <TableCell>
-                  {teacher.user.first_name} {teacher.user.last_name}
-                </TableCell>
+                <TableCell>{teacher.user.first_name} {teacher.user.last_name}</TableCell>
                 <TableCell>{teacher.user.email}</TableCell>
                 <TableCell>{teacher.phone}</TableCell>
                 <TableCell>{teacher.subject_specialization}</TableCell>
                 <TableCell>{teacher.employee_id}</TableCell>
                 <TableCell>{teacher.status}</TableCell>
+                <TableCell>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    <Button
+                      size="small"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => handleViewStudents(teacher)}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<EditIcon />}
+                      color="primary"
+                      onClick={() => navigate(`/admin/dashboard/edit-teacher/${teacher.id}`)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<DeleteIcon />}
+                      color="error"
+                      onClick={() => handleDeleteTeacher(teacher.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Box>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -97,6 +162,53 @@ const TeachersList = () => {
       <Box mt={2} display="flex" justifyContent="center">
         <Pagination count={count} page={page} onChange={handlePageChange} color="primary" />
       </Box>
+
+      {/* Students Modal */}
+      <Dialog open={openModal} fullWidth maxWidth="md" onClose={() => setOpenModal(false)}>
+        <DialogTitle>
+          Students under {selectedTeacher?.user.first_name} {selectedTeacher?.user.last_name}
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenModal(false)}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {students.length === 0 ? (
+            <Typography>No students assigned.</Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Class</TableCell>
+                  <TableCell>Roll Number</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {students.map((stu, idx) => (
+                  <TableRow key={stu.id}>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>{stu.user.first_name} {stu.user.last_name}</TableCell>
+                    <TableCell>{stu.user.email}</TableCell>
+                    <TableCell>{stu.student_class}</TableCell>
+                    <TableCell>{stu.roll_number}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenModal(false)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
