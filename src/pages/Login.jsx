@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
+import { Link } from "react-router-dom";
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -74,6 +75,11 @@ const Login = () => {
             >
               Login
             </Button>
+            <Box textAlign="right" mt={1}>
+  <Link to="/forgot-password" style={{ textDecoration: "none", color: "#1976d2" }}>
+    Forgot Password?
+  </Link>
+</Box>
           </form>
         </Paper>
       </Box>
