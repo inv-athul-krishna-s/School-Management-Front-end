@@ -24,7 +24,8 @@ const DashboardLayout = () => {
     { label: "🏠 Dashboard", path: "/admin/dashboard" },
     { label: "👥 Register User", path: "/admin/dashboard/register" },
     { label: "📝 Create Exam", path: "/admin/dashboard/create-exam" },
-    { label: "📊 View Results", path: "/admin/dashboard/results" },
+    { label: "📚 View Exams", path: "/admin/dashboard/view-exams" },
+    { label: "📊 View Results", path: "/admin/dashboard/view-class-results"},
     { label: "👨‍🏫 Teachers", path: "/admin/dashboard/teachers" },
     { label: "👩‍🎓 Students", path: "/admin/dashboard/students" },
   ];
