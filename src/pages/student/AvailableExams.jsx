@@ -22,7 +22,9 @@ const AvailableExams = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       })
-      .then((res) => setExams(res.data))
+      .then((res) => {
+        setExams(Array.isArray(res.data?.results) ? res.data.results : []);
+      })
       .catch((err) => console.error("Error fetching exams", err));
   }, []);
 
@@ -41,11 +43,12 @@ const AvailableExams = () => {
               <ListItem>
                 <ListItemText
                   primary={exam.title}
-                  secondary={`Created by: ${exam.teacher.user.first_name} | Class: ${exam.target_class}`}
+                  secondary={`Class: ${exam.target_class}`}
+
                 />
                 <Button
                   variant="contained"
-                  onClick={() => navigate(`/student/dashboard/exam/${exam.id}`)}
+                  onClick={() => navigate(`/student/dashboard/exams/${exam.id}`)}
                 >
                   Start
                 </Button>

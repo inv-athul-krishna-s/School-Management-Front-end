@@ -16,14 +16,28 @@ const AttemptExam = () => {
   const navigate = useNavigate();
   const [exam, setExam] = useState(null);
   const [answers, setAnswers] = useState({});
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios
       .get(`/exams/${id}/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
-      .then((res) => setExam(res.data))
-      .catch((err) => console.error("Exam fetch error", err));
+      .then((res) => {
+        setExam(res.data);
+
+        // Check if this exam has already been attempted
+        if (res.data.attempts && res.data.attempts.length > 0) {
+          setAlreadySubmitted(true);
+        }
+
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Exam fetch error", err);
+        setLoading(false);
+      });
   }, [id]);
 
   const handleSelect = (questionId, optionId) => {
@@ -33,8 +47,8 @@ const AttemptExam = () => {
   const handleSubmit = () => {
     const payload = {
       answers: Object.entries(answers).map(([question_id, option_id]) => ({
-        question_id,
-        option_id,
+        question_id: parseInt(question_id),
+        option_id: parseInt(option_id),
       })),
     };
 
@@ -47,12 +61,37 @@ const AttemptExam = () => {
         navigate("/student/dashboard");
       })
       .catch((err) => {
-        console.error("Exam submit error", err);
-        alert("Error submitting exam.");
-      });
+  console.error("Exam submit error", err);
+  console.error("Backend response:", err.response?.data);
+
+  if (err.response?.status === 403) {
+    alert(err.response.data?.detail || "Forbidden: You can't submit this exam.");
+  } else {
+    alert("Error submitting exam.");
+  }
+});
+
   };
 
-  if (!exam) return <Typography>Loading exam...</Typography>;
+  if (loading) return <Typography>Loading exam...</Typography>;
+
+  if (!exam) return <Typography>Error loading exam.</Typography>;
+
+  if (alreadySubmitted) {
+    return (
+      <Box maxWidth="600px" mx="auto" mt={4}>
+        <Typography variant="h5" color="primary" gutterBottom>
+          You’ve already submitted this exam.
+        </Typography>
+        <Typography>
+          You can go back to the dashboard to check your results or other exams.
+        </Typography>
+        <Button variant="outlined" onClick={() => navigate("/student/dashboard")} sx={{ mt: 2 }}>
+          Back to Dashboard
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box maxWidth="800px" mx="auto" mt={4}>
@@ -66,7 +105,7 @@ const AttemptExam = () => {
           <RadioGroup
             name={`question-${q.id}`}
             value={answers[q.id] || ""}
-            onChange={(e) => handleSelect(q.id, e.target.value)}
+            onChange={(e) => handleSelect(q.id, parseInt(e.target.value))}
           >
             {q.options.map((opt) => (
               <FormControlLabel

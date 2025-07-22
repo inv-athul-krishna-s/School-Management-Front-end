@@ -1,53 +1,117 @@
 import { useEffect, useState } from "react";
 import axios from "../../api/axios";
-import { Box, Typography, Card, CardContent, Divider } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Avatar,
+  CircularProgress,
+  Grid,
+  Divider
+} from "@mui/material";
+import { deepPurple } from "@mui/material/colors";
 
 const StudentProfile = () => {
-  const [student, setStudent] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [teacherName, setTeacherName] = useState("Not assigned");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
     axios
       .get("/students/me/", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then((res) => setStudent(res.data))
-      .catch((err) => console.error("Error fetching student profile", err));
+      .then((res) => {
+        const studentData = res.data;
+        setProfile(studentData);
+
+        // 🧠 Fetch teacher name using assigned_teacher ID
+        if (studentData.assigned_teacher) {
+          axios
+            .get(`/teachers/${studentData.assigned_teacher}/`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => {
+              const teacher = res.data.user;
+              setTeacherName(`${teacher.first_name} ${teacher.last_name}`);
+            })
+            .catch((err) => {
+              console.error("Failed to fetch teacher info", err);
+            });
+        }
+
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch student profile", err);
+        setLoading(false);
+      });
   }, []);
 
-  if (!student) return <Typography>Loading...</Typography>;
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" mt={10}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  const user = profile.user;
 
   return (
-    <Box maxWidth="600px" mx="auto" mt={5}>
-      <Card>
+    <Box maxWidth="800px" mx="auto" mt={4}>
+      <Card elevation={3}>
         <CardContent>
-          <Typography variant="h5" gutterBottom>
-            Profile Details
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
+          <Box display="flex" alignItems="center" gap={2} mb={3}>
+            <Avatar sx={{ bgcolor: deepPurple[500], width: 64, height: 64, fontSize: 28 }}>
+              {user.first_name?.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography variant="h6">
+                {user.first_name} {user.last_name}
+              </Typography>
+              <Typography color="text.secondary">{user.username}</Typography>
+            </Box>
+          </Box>
 
-          <Typography>
-            <strong>Name:</strong> {student.user.first_name} {student.user.last_name}
-          </Typography>
-          <Typography>
-            <strong>Username:</strong> {student.user.username}
-          </Typography>
-          <Typography>
-            <strong>Email:</strong> {student.user.email}
-          </Typography>
-          <Typography>
-            <strong>Phone:</strong> {student.phone}
-          </Typography>
-          <Typography>
-            <strong>Class:</strong> {student.student_class}
-          </Typography>
-          <Typography>
-            <strong>Roll Number:</strong> {student.roll_number}
-          </Typography>
-          <Typography>
-            <strong>Status:</strong> {student.status}
-          </Typography>
+          <Divider sx={{ my: 2 }} />
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+              <Typography>{user.email}</Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
+              <Typography>{profile.phone}</Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle2" color="text.secondary">Roll Number</Typography>
+              <Typography>{profile.roll_number}</Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle2" color="text.secondary">Class</Typography>
+              <Typography>{profile.student_class}</Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle2" color="text.secondary">Date of Birth</Typography>
+              <Typography>{new Date(profile.date_of_birth).toLocaleDateString()}</Typography>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle2" color="text.secondary">Admission Date</Typography>
+              <Typography>{new Date(profile.admission_date).toLocaleDateString()}</Typography>
+            </Grid>
+
+
+          </Grid>
         </CardContent>
       </Card>
     </Box>

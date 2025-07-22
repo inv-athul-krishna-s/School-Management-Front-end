@@ -8,36 +8,29 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 
 const StudentResults = () => {
   const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios
-      .get("/exams/", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      .get("/students/results/", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       })
       .then((res) => {
-        const exams = res.data;
-        const attempts = [];
-
-        exams.forEach((exam) => {
-          exam.attempts.forEach((attempt) => {
-            if (attempt.student.user.username === localStorage.getItem("username")) {
-              attempts.push({
-                examTitle: exam.title,
-                score: attempt.score,
-                startedAt: attempt.started_at,
-                finishedAt: attempt.finished_at,
-              });
-            }
-          });
-        });
-
-        setResults(attempts);
+        setResults(Array.isArray(res.data) ? res.data : []);
       })
-      .catch((err) => console.error("Error fetching exam results", err));
+      .catch((err) => {
+        console.error("Error fetching student results", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -46,7 +39,11 @@ const StudentResults = () => {
         My Exam Results
       </Typography>
 
-      {results.length === 0 ? (
+      {loading ? (
+        <Box display="flex" justifyContent="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      ) : results.length === 0 ? (
         <Typography>No exam results found.</Typography>
       ) : (
         <List>
@@ -54,15 +51,21 @@ const StudentResults = () => {
             <Paper key={idx} sx={{ my: 2, p: 2 }}>
               <ListItem>
                 <ListItemText
-                  primary={r.examTitle}
+                  primary={r.exam_title}
                   secondary={
                     <>
-                      <Typography>Score: {r.score.toFixed(2)}%</Typography>
+                      <Typography>Score: {r.score?.toFixed(2)}%</Typography>
                       <Typography>
-                        Started: {new Date(r.startedAt).toLocaleString()}
+                        Started:{" "}
+                        {r.started_at
+                          ? new Date(r.started_at).toLocaleString()
+                          : "N/A"}
                       </Typography>
                       <Typography>
-                        Finished: {new Date(r.finishedAt).toLocaleString()}
+                        Finished:{" "}
+                        {r.finished_at
+                          ? new Date(r.finished_at).toLocaleString()
+                          : "N/A"}
                       </Typography>
                     </>
                   }

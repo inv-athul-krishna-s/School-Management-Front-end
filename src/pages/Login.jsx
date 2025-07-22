@@ -1,8 +1,6 @@
-// 📁 src/pages/Login.jsx
 import {
   Box,
   Button,
-  Container,
   TextField,
   Typography,
   Alert,
@@ -10,8 +8,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-
 import { Link } from "react-router-dom";
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -29,15 +27,54 @@ const Login = () => {
   };
 
   return (
-    <Container maxWidth="xs">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        width: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#f0f4f8",
+        p: 2,
+      }}
+    >
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
+        sx={{
+          maxWidth: 450,
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: "100%", borderRadius: 2 }}>
-          <Typography variant="h5" textAlign="center" color="primary" mb={2}>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          color="primary"
+          textAlign="center"
+          gutterBottom
+        >
+          School Management System
+        </Typography>
+
+
+
+        <Paper
+          elevation={4}
+          sx={{
+            width: "100%",
+            p: 4,
+            borderRadius: 3,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Typography
+            variant="h6"
+            color="primary"
+            fontWeight="medium"
+            textAlign="center"
+            mb={2}
+          >
             Login
           </Typography>
 
@@ -71,19 +108,23 @@ const Login = () => {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, py: 1 }}
             >
-              Login
+              LOGIN
             </Button>
+
             <Box textAlign="right" mt={1}>
-  <Link to="/forgot-password" style={{ textDecoration: "none", color: "#1976d2" }}>
-    Forgot Password?
-  </Link>
-</Box>
+              <Link
+                to="/forgot-password"
+                style={{ textDecoration: "none", color: "#1976d2" }}
+              >
+                Forgot Password?
+              </Link>
+            </Box>
           </form>
         </Paper>
       </Box>
-    </Container>
+    </Box>
   );
 };
 
