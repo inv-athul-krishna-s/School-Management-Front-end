@@ -9,11 +9,17 @@ const EditTeacher = () => {
   const [form, setForm] = useState(null);
 
   useEffect(() => {
-    axios
-      .get(`/teachers/${id}/`)
-      .then((res) => setForm(res.data))
-      .catch((err) => console.error("Failed to load teacher data", err));
-  }, [id]);
+  axios
+    .get(`/teachers/${id}/`)
+    .then((res) => {
+      const teacherData = res.data;
+      if (!teacherData.user.id) {
+        teacherData.user.id = teacherData.user_id || teacherData.id;
+      }
+      setForm(teacherData);
+    })
+    .catch((err) => console.error("Failed to load teacher data", err));
+}, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,8 +36,14 @@ const EditTeacher = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
-      await axios.put(`/teachers/${id}/`, form, {
+      if (!form.user.id) {
+        alert("User ID is missing from form. Cannot update.");
+        return;}
+
+      await axios.patch(`/teachers/${id}/`, form, {
+
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       alert("Teacher updated!");
@@ -114,6 +126,7 @@ const EditTeacher = () => {
           onChange={handleChange}
           margin="normal"
         />
+        
         <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
           Update Teacher
         </Button>

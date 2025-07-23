@@ -44,7 +44,8 @@ const StudentList = () => {
             <th>Full Name</th>
             <th>Email</th>
             <th>Class</th>
-            <th>Phone</th> {/* Updated column */}
+            <th>Phone</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -56,6 +57,22 @@ const StudentList = () => {
                 <td>{student.user.email}</td>
                 <td>{student.student_class}</td>
                 <td>{student.user.phone || student.phone}</td> {/* Updated field */}
+                 <td>
+          <button
+            className="btn btn-sm btn-warning"
+            onClick={() =>
+              navigate(`/admin/dashboard/edit-student/${student.id}`)
+            }
+          >
+            ✏️ Edit
+          </button>
+            <button
+    className="btn btn-sm btn-danger"
+    onClick={() => handleDelete(student.id)}
+  >
+    🗑️ Delete
+  </button>
+        </td>
               </tr>
             ))
           ) : (

@@ -1,4 +1,3 @@
-//RegisterUser.jsx
 import { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import {
@@ -9,9 +8,11 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
+import ImportStudents from "./ImportStudents"; // 👈 Add this import
 
 const RegisterUser = () => {
   const [role, setRole] = useState("teacher");
+  const [mode, setMode] = useState("form"); // 👈 New toggle state
   const [teachers, setTeachers] = useState([]);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
 
@@ -51,7 +52,6 @@ const RegisterUser = () => {
           },
         })
         .then((res) => {
-          // ✅ Fix here: use `results` from paginated response
           setTeachers(res.data.results || []);
           setLoadingTeachers(false);
         })
@@ -136,12 +136,33 @@ const RegisterUser = () => {
         fullWidth
         label="Select Role"
         value={role}
-        onChange={(e) => setRole(e.target.value)}
+        onChange={(e) => {
+          setRole(e.target.value);
+          setMode("form"); // Reset mode when switching role
+        }}
         margin="normal"
       >
         <MenuItem value="teacher">Teacher</MenuItem>
         <MenuItem value="student">Student</MenuItem>
       </TextField>
+
+      {/* TOGGLE BUTTONS for student only */}
+      {role === "student" && (
+        <Box display="flex" justifyContent="center" gap={2} my={2}>
+          <Button
+            variant={mode === "form" ? "contained" : "outlined"}
+            onClick={() => setMode("form")}
+          >
+            Fill Form Manually
+          </Button>
+          <Button
+            variant={mode === "csv" ? "contained" : "outlined"}
+            onClick={() => setMode("csv")}
+          >
+            Import via CSV
+          </Button>
+        </Box>
+      )}
 
       {/* TEACHER FORM */}
       {role === "teacher" && (
@@ -167,8 +188,8 @@ const RegisterUser = () => {
         </form>
       )}
 
-      {/* STUDENT FORM */}
-      {role === "student" && (
+      {/* STUDENT FORM (MANUAL) */}
+      {role === "student" && mode === "form" && (
         <form onSubmit={handleStudentSubmit}>
           {Object.keys(studentData).map((key) => {
             if (key === "assigned_teacher") {
@@ -222,6 +243,11 @@ const RegisterUser = () => {
             Register Student
           </Button>
         </form>
+      )}
+
+      {/* STUDENT CSV IMPORT UI */}
+      {role === "student" && mode === "csv" && (
+        <ImportStudents />
       )}
     </Box>
   );

@@ -3,6 +3,7 @@ import PublicLayout from "../layouts/PublicLayout";
 import ProtectedLayout from "../layouts/ProtectedLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import StudentDashboardLayout from "../layouts/StudentDashboardLayout";
+import TeacherDashboardLayout from "../layouts/TeacherDashboardLayout";
 
 // Auth Pages
 import Login from "../pages/Login";
@@ -28,6 +29,13 @@ import TeacherDashboard from "../pages/teacher/TeacherDashboard";
 import RegisterStudent from "../pages/teacher/RegisterStudentByTeacher";
 import TeacherStudentList from "../pages/teacher/TeacherStudentList";
 import TeacherProfile from "../pages/teacher/TeacherProfile";
+
+import EditStudentByTeacher from "../pages/teacher/EditStudentByTeacher";
+import TeacherExamList from "../pages/teacher/TeacherExamList";
+import CreateExams from "../pages/teacher/CreateExams";
+import EditExam from "../pages/teacher/EditExam";
+import TeacherResults from "../pages/teacher/TeacherResults";
+
 
 // Student Pages
 import StudentDashboard from "../pages/student/StudentDashboard";
@@ -82,12 +90,20 @@ const AppRoutes = () => {
       children: [
         {
           path: "dashboard",
-          element: <DashboardLayout />,
+          element: <TeacherDashboardLayout />,
           children: [
             { path: "", element: <TeacherDashboard /> },
             { path: "register-student", element: <RegisterStudent /> },
             { path: "students", element: <TeacherStudentList /> },
+            { path: "students/:id/edit", element: <EditStudentByTeacher /> },
             { path: "profile", element: <TeacherProfile /> },
+            { path: "results", element: <TeacherResults /> },
+            { path: "exams/create", element: <CreateExams /> },
+            { path: "exams/manage", element: <TeacherExamList /> },
+
+            { path: "exams/:id/edit", element: <EditExam /> },
+
+
           ],
         },
       ],
