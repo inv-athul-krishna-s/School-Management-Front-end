@@ -6,6 +6,7 @@ import axios from "../../api/axios";
 const EditStudent = () => {
   const { id } = useParams();
   const [form, setForm] = useState(null);
+  const [originalForm, setOriginalForm] = useState(null); // For comparison
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -13,7 +14,14 @@ const EditStudent = () => {
       .get(`/students/${id}/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
-      .then((res) => setForm(res.data));
+      .then((res) => {
+        setForm(res.data);
+        setOriginalForm(res.data); // store original for comparison
+      })
+      .catch((err) => {
+        console.error("Failed to load student data:", err);
+        alert("Failed to load student details.");
+      });
   }, [id]);
 
   const handleChange = (e) => {
@@ -31,17 +39,44 @@ const EditStudent = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form || !originalForm) return;
+
+    const payload = {};
+
+    // Compare user subfields
+    const userPayload = {};
+    for (const key of ["username", "email", "first_name", "last_name", "phone"]) {
+      if (form.user[key] !== originalForm.user[key]) {
+        userPayload[key] = form.user[key];
+      }
+    }
+    if (Object.keys(userPayload).length > 0) {
+      payload.user = userPayload;
+    }
+
+    // Compare student-specific fields
+    for (const key of ["roll_number", "student_class"]) {
+      if (form[key] !== originalForm[key]) {
+        payload[key] = form[key];
+      }
+    }
+
+    if (Object.keys(payload).length === 0) {
+      alert("No changes made.");
+      return;
+    }
+
     axios
-      .patch(`/students/${id}/`, form, {
+      .patch(`/students/${id}/`, payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
       .then(() => {
-        alert("Student updated!");
+        alert("✅ Student updated!");
         navigate("/admin/dashboard/students");
       })
       .catch((err) => {
         console.error("Update failed:", err.response?.data || err.message);
-        alert("Failed to update student.");
+        alert("❌ Failed to update student.");
       });
   };
 
@@ -53,6 +88,7 @@ const EditStudent = () => {
         <h2 className="mb-4 text-center">Edit Student</h2>
         <form onSubmit={handleSubmit}>
           <div className="row g-3">
+            {/* User Fields */}
             <div className="col-md-6">
               <label className="form-label">Username</label>
               <input
@@ -62,6 +98,7 @@ const EditStudent = () => {
                 value={form.user.username}
                 onChange={handleChange}
                 placeholder="Username"
+                required
               />
             </div>
 
@@ -74,6 +111,7 @@ const EditStudent = () => {
                 value={form.user.email}
                 onChange={handleChange}
                 placeholder="Email"
+                required
               />
             </div>
 
@@ -113,6 +151,7 @@ const EditStudent = () => {
               />
             </div>
 
+            {/* Student Fields */}
             <div className="col-md-6">
               <label className="form-label">Roll Number</label>
               <input

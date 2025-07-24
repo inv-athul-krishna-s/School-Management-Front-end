@@ -9,18 +9,8 @@ const EditStudentByTeacher = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    roll_number: "",
-    student_class: "",
-    date_of_birth: "",
-    admission_date: "",
-    status: "active",
-  });
+  const [formData, setFormData] = useState(null);
+  const [originalData, setOriginalData] = useState(null);
 
   useEffect(() => {
     axios
@@ -29,7 +19,7 @@ const EditStudentByTeacher = () => {
       })
       .then((res) => {
         const s = res.data;
-        setFormData({
+        const data = {
           username: s.user.username,
           email: s.user.email,
           first_name: s.user.first_name,
@@ -40,10 +30,13 @@ const EditStudentByTeacher = () => {
           date_of_birth: s.date_of_birth,
           admission_date: s.admission_date,
           status: s.status,
-        });
+        };
+        setFormData(data);
+        setOriginalData(data);
       })
       .catch((err) => {
         console.error("Error fetching student data", err);
+        alert("Failed to fetch student data.");
       });
   }, [id, token]);
 
@@ -54,33 +47,53 @@ const EditStudentByTeacher = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      user: {
-        username: formData.username,
-        email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        phone: formData.phone,
-      },
-      phone: formData.phone,
-      roll_number: formData.roll_number,
-      student_class: formData.student_class,
-      date_of_birth: formData.date_of_birth,
-      admission_date: formData.admission_date,
-      status: formData.status,
-    };
+    if (!formData || !originalData) return;
+
+    // Compare original and current formData
+    const payload = {};
+    const userPayload = {};
+
+    for (const key of ["username", "email", "first_name", "last_name"]) {
+      if (formData[key] !== originalData[key]) {
+        userPayload[key] = formData[key];
+      }
+    }
+
+    if (Object.keys(userPayload).length > 0) {
+      payload.user = userPayload;
+    }
+
+    for (const key of [
+      "phone",
+      "roll_number",
+      "student_class",
+      "date_of_birth",
+      "admission_date",
+      "status",
+    ]) {
+      if (formData[key] !== originalData[key]) {
+        payload[key] = formData[key];
+      }
+    }
+
+    if (Object.keys(payload).length === 0) {
+      alert("No changes made.");
+      return;
+    }
 
     try {
-      await axios.put(`/students/${id}/`, payload, {
+      await axios.patch(`/students/${id}/`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("Student updated successfully.");
       navigate("/teacher/dashboard/students");
     } catch (error) {
-      console.error("Error updating student", error);
+      console.error("Error updating student", error.response?.data || error);
       alert("Failed to update student.");
     }
   };
+
+  if (!formData) return <Typography>Loading...</Typography>;
 
   return (
     <Box maxWidth={600} mx="auto" my={4} p={3} boxShadow={3} bgcolor="#fff" borderRadius={2}>

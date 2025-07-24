@@ -5,16 +5,20 @@ import {
   Typography,
   Alert,
   Paper,
+  Slide,
 } from "@mui/material";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import Logo from "../assets/logo.jpeg"; // Replace with your logo
+import BackgroundImg from "../assets/school.jpeg"; // Your background image
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const { login } = useAuth();
+  const [showForm, setShowForm] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,6 +30,11 @@ const Login = () => {
     }
   };
 
+  useState(() => {
+    const timer = setTimeout(() => setShowForm(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Box
       sx={{
@@ -34,51 +43,54 @@ const Login = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#f0f4f8",
+        backgroundImage: `url(${BackgroundImg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         p: 2,
       }}
     >
-      <Box
-        sx={{
-          maxWidth: 450,
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          color="primary"
-          textAlign="center"
-          gutterBottom
-        >
-          School Management System
-        </Typography>
-
-
-
+      <Slide direction="up" in={showForm} timeout={800}>
         <Paper
-          elevation={4}
+          elevation={8}
           sx={{
+            maxWidth: 420,
             width: "100%",
             p: 4,
-            borderRadius: 3,
-            backgroundColor: "#fff",
+            borderRadius: 4,
+            backgroundColor: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(8px)", // Blur effect on background
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
           }}
         >
+          <img
+            src={Logo}
+            alt="School Logo"
+            style={{ width: 80, height: 80, marginBottom: 16 }}
+          />
+
           <Typography
-            variant="h6"
+            variant="h5"
+            fontWeight="bold"
             color="primary"
-            fontWeight="medium"
             textAlign="center"
-            mb={2}
+            gutterBottom
           >
-            Login
+            School Management System
           </Typography>
 
-          <form onSubmit={handleSubmit}>
+          <Typography
+            variant="subtitle1"
+            color="textSecondary"
+            textAlign="center"
+            mb={3}
+          >
+            Login to continue
+          </Typography>
+
+          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
             <TextField
               label="Username"
               fullWidth
@@ -86,6 +98,7 @@ const Login = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              variant="outlined"
             />
             <TextField
               label="Password"
@@ -95,6 +108,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              variant="outlined"
             />
 
             {error && (
@@ -108,22 +122,26 @@ const Login = () => {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 3, py: 1 }}
+              sx={{ mt: 3, py: 1.2, fontWeight: "bold", fontSize: "1rem" }}
             >
               LOGIN
             </Button>
 
-            <Box textAlign="right" mt={1}>
+            <Box textAlign="right" mt={2}>
               <Link
                 to="/forgot-password"
-                style={{ textDecoration: "none", color: "#1976d2" }}
+                style={{
+                  textDecoration: "none",
+                  color: "#1976d2",
+                  fontSize: "0.9rem",
+                }}
               >
                 Forgot Password?
               </Link>
             </Box>
           </form>
         </Paper>
-      </Box>
+      </Slide>
     </Box>
   );
 };

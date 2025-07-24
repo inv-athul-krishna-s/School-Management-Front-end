@@ -12,11 +12,13 @@ import {
   AppBar,
   Typography,
   IconButton,
+  useTheme,
+  useMediaQuery,
+  Divider,
 } from "@mui/material";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import PersonIcon from "@mui/icons-material/Person";
-import DashboardIcon from "@mui/icons-material/Dashboard";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -29,6 +31,9 @@ const StudentDashboardLayout = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -37,7 +42,6 @@ const StudentDashboardLayout = () => {
   };
 
   const navItems = [
-    
     { text: "Profile", icon: <PersonIcon />, path: "profile" },
     { text: "Available Exams", icon: <AssignmentIcon />, path: "exams" },
     { text: "Results", icon: <AssessmentIcon />, path: "results" },
@@ -45,14 +49,15 @@ const StudentDashboardLayout = () => {
   ];
 
   const drawer = (
-    <div>
+    <Box>
       <Toolbar>
         <Typography variant="h6" noWrap>
           Student Portal
         </Typography>
       </Toolbar>
+      <Divider />
       <List>
-        {navItems.map((item, index) => (
+        {navItems.map((item) => (
           <ListItem
             key={item.text}
             disablePadding
@@ -67,36 +72,45 @@ const StudentDashboardLayout = () => {
           </ListItem>
         ))}
       </List>
-    </div>
+    </Box>
   );
 
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
 
-      {/* Top AppBar */}
+      {/* AppBar */}
       <AppBar
         position="fixed"
-        sx={{ width: { sm: `calc(100% - ${drawerWidth}px)` }, ml: { sm: `${drawerWidth}px` } }}
+        sx={{
+          zIndex: theme.zIndex.drawer + 1,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+        }}
       >
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            sx={{ mr: 2, display: { sm: "none" } }}
-          >
-            <MenuIcon />
-          </IconButton>
+          {/* Hamburger for Mobile */}
+          {isMobile && (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
+
           <Typography variant="h6" noWrap component="div">
             Student Dashboard
           </Typography>
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar Drawer */}
+      {/* Navigation Drawer */}
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+        {/* Mobile Drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -110,6 +124,7 @@ const StudentDashboardLayout = () => {
           {drawer}
         </Drawer>
 
+        {/* Desktop Drawer */}
         <Drawer
           variant="permanent"
           sx={{
@@ -122,7 +137,7 @@ const StudentDashboardLayout = () => {
         </Drawer>
       </Box>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <Box
         component="main"
         sx={{
@@ -130,7 +145,7 @@ const StudentDashboardLayout = () => {
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: "100vh",
-          backgroundColor: "#f9f9f9",
+          bgcolor: "#f5f5f5",
         }}
       >
         <Toolbar />

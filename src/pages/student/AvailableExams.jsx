@@ -8,11 +8,16 @@ import {
   ListItemText,
   Button,
   Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const AvailableExams = () => {
   const [exams, setExams] = useState([]);
+  const [filter, setFilter] = useState("upcoming");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,10 +28,20 @@ const AvailableExams = () => {
         },
       })
       .then((res) => {
-        setExams(Array.isArray(res.data?.results) ? res.data.results : []);
+        const data = Array.isArray(res.data?.results) ? res.data.results : [];
+        setExams(data);
       })
       .catch((err) => console.error("Error fetching exams", err));
   }, []);
+
+  // Categorize exams
+  const attemptedExams = exams.filter((exam) => exam.attempts && exam.attempts.length > 0);
+  const unattemptedExams = exams.filter((exam) => !exam.attempts || exam.attempts.length === 0);
+
+  const filteredExams =
+    filter === "upcoming" ? unattemptedExams :
+    filter === "unattempted" ? unattemptedExams :
+    attemptedExams;
 
   return (
     <Box maxWidth="700px" mx="auto" mt={4}>
@@ -34,24 +49,47 @@ const AvailableExams = () => {
         Available Exams
       </Typography>
 
-      {exams.length === 0 ? (
-        <Typography>No exams available right now.</Typography>
+      {/* Filter Dropdown */}
+      <FormControl fullWidth sx={{ my: 2 }}>
+        <InputLabel id="exam-filter-label">Filter Exams</InputLabel>
+        <Select
+          labelId="exam-filter-label"
+          value={filter}
+          label="Filter Exams"
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <MenuItem value="upcoming">Upcoming Exams</MenuItem>
+          <MenuItem value="unattempted">Unattempted Exams</MenuItem>
+          <MenuItem value="finished">Finished Exams</MenuItem>
+        </Select>
+      </FormControl>
+
+      {filteredExams.length === 0 ? (
+        <Typography>No exams found for this category.</Typography>
       ) : (
         <List>
-          {exams.map((exam) => (
+          {filteredExams.map((exam) => (
             <Paper key={exam.id} sx={{ my: 2, p: 2 }}>
               <ListItem>
                 <ListItemText
                   primary={exam.title}
                   secondary={`Class: ${exam.target_class}`}
-
                 />
-                <Button
-                  variant="contained"
-                  onClick={() => navigate(`/student/dashboard/exams/${exam.id}`)}
-                >
-                  Start
-                </Button>
+                {filter !== "finished" && (
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      navigate(`/student/dashboard/exams/${exam.id}`)
+                    }
+                  >
+                    Start
+                  </Button>
+                )}
+                {filter === "finished" && (
+                  <Typography variant="body2" color="textSecondary">
+                    Attempted
+                  </Typography>
+                )}
               </ListItem>
             </Paper>
           ))}
