@@ -13,35 +13,60 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";  // <-- Added useLocation
 
 const AvailableExams = () => {
   const [exams, setExams] = useState([]);
   const [filter, setFilter] = useState("upcoming");
   const navigate = useNavigate();
+  const location = useLocation();  // <-- Get navigation state
 
   useEffect(() => {
-    axios
-      .get("/exams/", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      .then((res) => {
-        const data = Array.isArray(res.data?.results) ? res.data.results : [];
-        setExams(data);
-      })
-      .catch((err) => console.error("Error fetching exams", err));
-  }, []);
+    const fetchExams = () => {
+      axios
+        .get("/exams/", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        .then((res) => {
+          const data = Array.isArray(res.data?.results) ? res.data.results : res.data;
+          setExams(data);
+        })
+        .catch((err) => console.error("Error fetching exams", err));
+    };
 
-  // Categorize exams
-  const attemptedExams = exams.filter((exam) => exam.attempts && exam.attempts.length > 0);
-  const unattemptedExams = exams.filter((exam) => !exam.attempts || exam.attempts.length === 0);
+    fetchExams();
 
-  const filteredExams =
-    filter === "upcoming" ? unattemptedExams :
-    filter === "unattempted" ? unattemptedExams :
-    attemptedExams;
+    // If redirected from AttemptExam with refresh flag
+    if (location.state?.refresh) {
+      fetchExams();
+      window.history.replaceState({}, document.title); // Clear refresh flag
+    }
+  }, [location]);
+
+  const now = new Date();
+
+  // Categorize exams based on time and attempts
+  const categorizedExams = exams.reduce(
+    (acc, exam) => {
+      const startTime = new Date(exam.start_time);
+      const endTime = new Date(startTime.getTime() + exam.duration_min * 60000);
+      const isAttempted = exam.attempts && exam.attempts.length > 0;
+
+      if (isAttempted) {
+        acc.finished.push(exam);
+      } else if (now < startTime) {
+        acc.upcoming.push(exam);
+      } else if (now > endTime) {
+        acc.unattempted.push(exam);
+      }
+      return acc;
+    },
+    { upcoming: [], unattempted: [], finished: [] }
+  );
+
+  const filteredExams = categorizedExams[filter] || [];
 
   return (
     <Box maxWidth="700px" mx="auto" mt={4}>
@@ -75,7 +100,7 @@ const AvailableExams = () => {
                   primary={exam.title}
                   secondary={`Class: ${exam.target_class}`}
                 />
-                {filter !== "finished" && (
+                {filter === "upcoming" && (
                   <Button
                     variant="contained"
                     onClick={() =>
@@ -84,6 +109,11 @@ const AvailableExams = () => {
                   >
                     Start
                   </Button>
+                )}
+                {filter === "unattempted" && (
+                  <Typography variant="body2" color="error">
+                    Not Attempted
+                  </Typography>
                 )}
                 {filter === "finished" && (
                   <Typography variant="body2" color="textSecondary">

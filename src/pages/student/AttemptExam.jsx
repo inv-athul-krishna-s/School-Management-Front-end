@@ -18,6 +18,7 @@ const AttemptExam = () => {
   const [answers, setAnswers] = useState({});
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0); // in milliseconds
 
   useEffect(() => {
     axios
@@ -27,10 +28,18 @@ const AttemptExam = () => {
       .then((res) => {
         setExam(res.data);
 
-        // Check if this exam has already been attempted
+        // Check if already submitted
         if (res.data.attempts && res.data.attempts.length > 0) {
           setAlreadySubmitted(true);
         }
+
+        // Calculate time left for the timer
+        const startTime = new Date(res.data.start_time).getTime();
+        const durationMs = res.data.duration_min * 60000;
+        const endTime = startTime + durationMs;
+        const now = Date.now();
+        const initialTimeLeft = Math.max(endTime - now, 0);
+        setTimeLeft(initialTimeLeft);
 
         setLoading(false);
       })
@@ -40,11 +49,38 @@ const AttemptExam = () => {
       });
   }, [id]);
 
+  // Timer effect
+  useEffect(() => {
+    if (timeLeft <= 0 || alreadySubmitted || loading) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1000) {
+          clearInterval(interval);
+          handleSubmit(true); // Auto-submit
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft, alreadySubmitted, loading]);
+
+  const formatTime = (ms) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  };
+
   const handleSelect = (questionId, optionId) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (auto = false) => {
     const payload = {
       answers: Object.entries(answers).map(([question_id, option_id]) => ({
         question_id: parseInt(question_id),
@@ -57,20 +93,22 @@ const AttemptExam = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
       .then((res) => {
-        alert(`Exam submitted! Your score: ${res.data.score.toFixed(2)}%`);
-        navigate("/student/dashboard");
+        if (auto) {
+          alert("Time’s up! Your exam has been auto-submitted.");
+        } else {
+          alert(`Exam submitted! Your score: ${res.data.score.toFixed(2)}%`);
+        }
+        navigate("/student/dashboard", { state: { refresh: true } });
+
       })
       .catch((err) => {
-  console.error("Exam submit error", err);
-  console.error("Backend response:", err.response?.data);
-
-  if (err.response?.status === 403) {
-    alert(err.response.data?.detail || "Forbidden: You can't submit this exam.");
-  } else {
-    alert("Error submitting exam.");
-  }
-});
-
+        console.error("Exam submit error", err);
+        if (err.response?.status === 403) {
+          alert(err.response.data?.detail || "Forbidden: You can't submit this exam.");
+        } else {
+          alert("Error submitting exam.");
+        }
+      });
   };
 
   if (loading) return <Typography>Loading exam...</Typography>;
@@ -99,6 +137,12 @@ const AttemptExam = () => {
         {exam.title}
       </Typography>
 
+      {/* Timer */}
+      <Typography variant="h6" color={timeLeft < 60000 ? "error" : "textPrimary"} gutterBottom>
+        Time Left: {formatTime(timeLeft)}
+      </Typography>
+
+      {/* Questions */}
       {exam.questions.map((q) => (
         <Paper key={q.id} sx={{ my: 2, p: 2 }}>
           <Typography fontWeight="bold">{q.text}</Typography>
@@ -122,7 +166,7 @@ const AttemptExam = () => {
       <Button
         variant="contained"
         color="primary"
-        onClick={handleSubmit}
+        onClick={() => handleSubmit(false)}
         sx={{ mt: 2 }}
       >
         Submit Exam
