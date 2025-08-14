@@ -55,7 +55,7 @@ const RegisterUser = () => {
           first_name: data.first_name,
           last_name: data.last_name,
           phone: data.phone,
-          password: data.password, // 🔥 Include password
+          password: data.password, 
         },
         phone: data.phone,
         status: data.status,

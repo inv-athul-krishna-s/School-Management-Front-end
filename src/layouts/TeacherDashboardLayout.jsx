@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+
+import ChatIcon from "@mui/icons-material/Chat";
+
 import {
   AppBar,
   Box,
@@ -37,6 +40,7 @@ const navItems = [
   { label: "📝 Create Exam", path: "/teacher/dashboard/exams/create" },
   { label: "🛠 Manage Exams", path: "/teacher/dashboard/exams/manage" },
   { label: "📊 View Results", path: "/teacher/dashboard/results" },
+  { label: "💬 Chat", path: "/teacher/dashboard/chat" }, 
   { label: "👤 Profile", path: "/teacher/dashboard/profile" },
 ];
   const drawerContent = (

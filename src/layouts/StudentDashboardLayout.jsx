@@ -1,4 +1,7 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import ChatIcon from "@mui/icons-material/Chat";
+
+
 import {
   Box,
   CssBaseline,
@@ -45,6 +48,7 @@ const StudentDashboardLayout = () => {
     { text: "Profile", icon: <PersonIcon />, path: "profile" },
     { text: "Available Exams", icon: <AssignmentIcon />, path: "exams" },
     { text: "Results", icon: <AssessmentIcon />, path: "results" },
+    { text: "Chat", icon: <ChatIcon />, path: "chat" },
     { text: "Logout", icon: <LogoutIcon />, action: handleLogout },
   ];
 
@@ -151,6 +155,7 @@ const StudentDashboardLayout = () => {
         <Toolbar />
         <Outlet />
       </Box>
+      
     </Box>
   );
 };
