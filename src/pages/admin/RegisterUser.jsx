@@ -156,8 +156,7 @@ const RegisterUser = () => {
                   fullWidth
                   label={field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                   margin="normal"
-                  type={field === "password" ? "password" : "text"} // 🔥 hide password input
-                  error={!!errors[field]}
+                  type={field === "password" ? "password" : "text"} 
                   helperText={errors[field] && "Required"}
                 />
               )}

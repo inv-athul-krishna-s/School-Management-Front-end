@@ -21,8 +21,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 
-const drawerWidth = 240;
-const collapsedWidth = 60;
+const drawerWidth = 220;
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
@@ -32,13 +31,8 @@ const DashboardLayout = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  const toggleDrawer = () => {
-    setIsDrawerOpen(!isDrawerOpen);
-  };
-
-  const handleMobileDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
+  const handleMobileDrawerToggle = () => setMobileOpen(!mobileOpen);
 
   const navItems = [
     { label: "🏠 Dashboard", path: "/admin/dashboard" },
@@ -51,14 +45,8 @@ const DashboardLayout = () => {
   ];
 
   const drawerContent = (
-    <Box>
-      <Toolbar
-        sx={{
-          display: "flex",
-          justifyContent: isDrawerOpen ? "flex-end" : "center",
-          px: 1,
-        }}
-      >
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <Toolbar sx={{ justifyContent: "flex-end", px: 1 }}>
         {!isMobile && (
           <IconButton onClick={toggleDrawer}>
             {isDrawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
@@ -66,24 +54,25 @@ const DashboardLayout = () => {
         )}
       </Toolbar>
       <Divider />
-      <List>
+      <List sx={{ flexGrow: 1 }}>
         {navItems.map((item, index) => (
-          <ListItem key={index} disablePadding sx={{ display: "block" }}>
+          <ListItem key={index} disablePadding>
             <ListItemButton
               component={NavLink}
               to={item.path}
               onClick={() => isMobile && setMobileOpen(false)}
               sx={{
                 minHeight: 48,
-                justifyContent: isDrawerOpen || isMobile ? "initial" : "center",
-                px: 2.5,
+                px: 2,
               }}
             >
               <ListItemText
                 primary={item.label}
                 sx={{
-                  opacity: isDrawerOpen || isMobile ? 1 : 0,
-                  whiteSpace: "nowrap",
+                  "& .MuiTypography-root": {
+                    fontSize: "0.95rem",
+                    fontWeight: 500,
+                  },
                 }}
               />
             </ListItemButton>
@@ -94,84 +83,34 @@ const DashboardLayout = () => {
   );
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", height: "100vh", width: "100vw" }}>
       <CssBaseline />
 
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          zIndex: theme.zIndex.drawer + 1,
-          width: { md: `calc(100% - ${isDrawerOpen ? drawerWidth : collapsedWidth}px)`, xs: "100%" },
-          ml: { md: `${isDrawerOpen ? drawerWidth : collapsedWidth}px`, xs: 0 },
-        }}
-      >
-        <Toolbar>
-          {/* Hamburger for Mobile */}
-          {isMobile && (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleMobileDrawerToggle}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-
-          {/* App Name */}
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            School Management System
-          </Typography>
-
-          {/* Center Welcome (hidden on small screens) */}
-          {!isMobile && (
-            <Box sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-              <Typography variant="h6">Welcome, {user.username}</Typography>
-            </Box>
-          )}
-
-          {/* Logout Button */}
-          <Button color="inherit" onClick={logout}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
-
-      {/* Mobile Drawer */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={handleMobileDrawerToggle}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": {
-            width: drawerWidth,
-            boxSizing: "border-box",
-          },
-        }}
-      >
-        {drawerContent}
-      </Drawer>
-
-      {/* Desktop Drawer */}
-      {!isMobile && (
+      {/* Sidebar Drawer */}
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleMobileDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": { width: drawerWidth },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      ) : (
         <Drawer
           variant="permanent"
           open={isDrawerOpen}
           sx={{
-            width: isDrawerOpen ? drawerWidth : collapsedWidth,
+            width: isDrawerOpen ? drawerWidth : 70,
             flexShrink: 0,
             "& .MuiDrawer-paper": {
-              width: isDrawerOpen ? drawerWidth : collapsedWidth,
+              width: isDrawerOpen ? drawerWidth : 70,
               overflowX: "hidden",
-              transition: theme.transitions.create("width", {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.standard,
-              }),
-              boxSizing: "border-box",
+              transition: "width 0.2s ease",
             },
           }}
         >
@@ -179,26 +118,67 @@ const DashboardLayout = () => {
         </Drawer>
       )}
 
-      {/* Main Content */}
+      {/* Main Layout */}
       <Box
-        component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          bgcolor: "#f5f5f5",
+          display: "flex",
+          flexDirection: "column",
           minHeight: "100vh",
-          ml: {
-            md: isDrawerOpen ? `${drawerWidth}px` : `${collapsedWidth}px`,
-            xs: 0,
-          },
-          transition: theme.transitions.create("margin", {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.standard,
-          }),
+          width: "100%",
         }}
       >
-        <Toolbar />
-        <Outlet />
+        {/* AppBar */}
+        <AppBar
+          position="fixed"
+          color="primary"
+          sx={{
+            zIndex: theme.zIndex.drawer + 1,
+            width: "100%",
+          }}
+        >
+          <Toolbar>
+            {isMobile && (
+              <IconButton
+                color="inherit"
+                edge="start"
+                onClick={handleMobileDrawerToggle}
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: "bold" }}>
+              School Management System
+            </Typography>
+            {!isMobile && (
+              <Typography variant="subtitle1" sx={{ fontWeight: 500, mr: 3 }}>
+                Welcome, {user.username}
+              </Typography>
+            )}
+            <Button color="inherit" onClick={logout}>
+              Logout
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        {/* Main Content - FULL WIDTH, NO WHITE SPACE */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            bgcolor: "#f9f9f9",
+            mt: "64px", // below AppBar
+            px: 2,
+            py: 2,
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

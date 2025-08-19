@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
-
 import { useAuth } from "../../context/AuthContext";
 
 const AdminDashboard = () => {
@@ -8,7 +7,6 @@ const AdminDashboard = () => {
 
   const [studentCount, setStudentCount] = useState(0);
   const [teacherCount, setTeacherCount] = useState(0);
-  const [upcomingExamCount, setUpcomingExamCount] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
@@ -20,75 +18,46 @@ const AdminDashboard = () => {
       const studentRes = await axios.get("/students/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const countStudents =
+      setStudentCount(
         studentRes.data.count ||
-        studentRes.data.results?.length ||
-        studentRes.data.length ||
-        0;
-      setStudentCount(countStudents);
+          studentRes.data.results?.length ||
+          studentRes.data.length ||
+          0
+      );
 
       // Fetch teachers
       const teacherRes = await axios.get("/teachers/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const countTeachers =
+      setTeacherCount(
         teacherRes.data.count ||
-        teacherRes.data.results?.length ||
-        teacherRes.data.length ||
-        0;
-      setTeacherCount(countTeachers);
-
-      // Fetch exams
-      const examRes = await axios.get("/exams/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const allExams =
-        examRes.data.results || examRes.data || [];
-
-      const today = new Date();
-
-      const upcomingExams = allExams.filter((exam) => {
-        const examDate = new Date(exam.date);
-        return examDate > today;
-      });
-
-      setUpcomingExamCount(upcomingExams.length);
+          teacherRes.data.results?.length ||
+          teacherRes.data.length ||
+          0
+      );
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="mb-4">📊 Admin Dashboard</h2>
-      <div className="row">
+    <div className="px-3 py-4">
+      <h2 className="mb-4 text-center fw-bold">📊 Admin Dashboard</h2>
+
+      <div className="d-grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))" }}>
         {/* Students Card */}
-        <div className="col-md-4 mb-4">
-          <div className="card text-white bg-primary shadow">
-            <div className="card-body">
-              <h5 className="card-title">Total Students</h5>
-              <p className="card-text fs-2">{studentCount}</p>
-            </div>
+        <div className="card text-white bg-primary shadow rounded-3">
+          <div className="card-body text-center">
+            <h5 className="card-title">Total Students</h5>
+            <p className="card-text fs-1 fw-bold">{studentCount}</p>
           </div>
         </div>
 
         {/* Teachers Card */}
-        <div className="col-md-4 mb-4">
-          <div className="card text-white bg-success shadow">
-            <div className="card-body">
-              <h5 className="card-title">Total Teachers</h5>
-              <p className="card-text fs-2">{teacherCount}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Upcoming Exams Card */}
-        <div className="col-md-4 mb-4">
-          <div className="card text-white bg-warning shadow">
-            <div className="card-body">
-              <h5 className="card-title">Upcoming Exams</h5>
-              <p className="card-text fs-2">{upcomingExamCount}</p>
-            </div>
+        <div className="card text-white bg-success shadow rounded-3">
+          <div className="card-body text-center">
+            <h5 className="card-title">Total Teachers</h5>
+            <p className="card-text fs-1 fw-bold">{teacherCount}</p>
           </div>
         </div>
       </div>

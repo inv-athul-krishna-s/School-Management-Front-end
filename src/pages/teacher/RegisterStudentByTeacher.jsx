@@ -1,70 +1,45 @@
-import { useState } from "react";
 import { Box, Typography, TextField, Button } from "@mui/material";
+import { useForm } from "react-hook-form";
 import axios from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 
 const RegisterStudentByTeacher = () => {
   const { token } = useAuth();
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    password: "",
-    roll_number: "",
-    student_class: "",
-    date_of_birth: "",
-    admission_date: "",
-    status: "active",
-  });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const onSubmit = async (data) => {
     const payload = {
       user: {
-        username: formData.username,
-        email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        phone: formData.phone,
-        password: formData.password,
+        username: data.username,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        phone: data.phone,
+        password: data.password,
       },
-      phone: formData.phone,
-      roll_number: formData.roll_number,
-      student_class: formData.student_class,
-      date_of_birth: formData.date_of_birth,
-      admission_date: formData.admission_date,
-      status: formData.status,
+      phone: data.phone,
+      roll_number: data.roll_number,
+      student_class: data.student_class,
+      date_of_birth: data.date_of_birth,
+      admission_date: data.admission_date,
+      status: "active",
     };
 
     try {
       await axios.post("/students/", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert("✅ Student registered successfully");
-      setFormData({
-        username: "",
-        email: "",
-        first_name: "",
-        last_name: "",
-        phone: "",
-        password: "",
-        roll_number: "",
-        student_class: "",
-        date_of_birth: "",
-        admission_date: "",
-        status: "active",
-      });
+      alert("Student registered successfully");
+      reset();
     } catch (err) {
       console.error(err);
-      alert("❌ Failed to register student");
+      alert("Failed to register student");
     }
   };
 
@@ -74,18 +49,111 @@ const RegisterStudentByTeacher = () => {
         🧑‍🎓 Register New Student
       </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <TextField label="Username" name="username" value={formData.username} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="First Name" name="first_name" value={formData.first_name} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="Last Name" name="last_name" value={formData.last_name} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="Password" name="password" value={formData.password} onChange={handleChange} type="password" fullWidth margin="normal" required />
-        <TextField label="Roll Number" name="roll_number" value={formData.roll_number} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="Class" name="student_class" value={formData.student_class} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField label="Date of Birth" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} required />
-        <TextField label="Admission Date" name="admission_date" type="date" value={formData.admission_date} onChange={handleChange} fullWidth margin="normal" InputLabelProps={{ shrink: true }} required />
-        
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <TextField
+          label="Username"
+          fullWidth
+          margin="normal"
+          {...register("username", { required: "Username is required" })}
+          error={!!errors.username}
+          helperText={errors.username?.message}
+        />
+
+        <TextField
+          label="Email"
+          fullWidth
+          margin="normal"
+          {...register("email", {
+            required: "Email is required",
+            pattern: { value: /^\S+@\S+$/i, message: "Invalid email format" },
+          })}
+          error={!!errors.email}
+          helperText={errors.email?.message}
+        />
+
+        <TextField
+          label="First Name"
+          fullWidth
+          margin="normal"
+          {...register("first_name", { required: "First name is required" })}
+          error={!!errors.first_name}
+          helperText={errors.first_name?.message}
+        />
+
+        <TextField
+          label="Last Name"
+          fullWidth
+          margin="normal"
+          {...register("last_name", { required: "Last name is required" })}
+          error={!!errors.last_name}
+          helperText={errors.last_name?.message}
+        />
+
+        <TextField
+          label="Phone"
+          fullWidth
+          margin="normal"
+          {...register("phone", {
+            required: "Phone number is required",
+            pattern: { value: /^[0-9]{10}$/, message: "Phone must be 10 digits" },
+          })}
+          error={!!errors.phone}
+          helperText={errors.phone?.message}
+        />
+
+        <TextField
+          label="Password"
+          type="password"
+          fullWidth
+          margin="normal"
+          {...register("password", {
+            required: "Password is required",
+            minLength: { value: 6, message: "Password must be at least 6 characters" },
+          })}
+          error={!!errors.password}
+          helperText={errors.password?.message}
+        />
+
+        <TextField
+          label="Roll Number"
+          fullWidth
+          margin="normal"
+          {...register("roll_number", { required: "Roll number is required" })}
+          error={!!errors.roll_number}
+          helperText={errors.roll_number?.message}
+        />
+
+        <TextField
+          label="Class"
+          fullWidth
+          margin="normal"
+          {...register("student_class", { required: "Class is required" })}
+          error={!!errors.student_class}
+          helperText={errors.student_class?.message}
+        />
+
+        <TextField
+          label="Date of Birth"
+          type="date"
+          fullWidth
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+          {...register("date_of_birth", { required: "Date of birth is required" })}
+          error={!!errors.date_of_birth}
+          helperText={errors.date_of_birth?.message}
+        />
+
+        <TextField
+          label="Admission Date"
+          type="date"
+          fullWidth
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+          {...register("admission_date", { required: "Admission date is required" })}
+          error={!!errors.admission_date}
+          helperText={errors.admission_date?.message}
+        />
+
         <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
           Register Student
         </Button>

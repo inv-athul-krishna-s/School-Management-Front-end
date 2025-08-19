@@ -31,18 +31,18 @@ const TeacherResults = () => {
   useEffect(() => {
     const fetchResults = async () => {
       try {
+        // Get all exams for this teacher
         const examsRes = await axios.get("/exams/", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         const examsArray = examsRes.data.results || examsRes.data || [];
 
-        const myExams = examsArray.filter(
-          (exam) => exam.teacher?.user === user.id
-        );
+        const myExams = examsArray;
 
         const allResults = [];
 
+        // Fetch results per exam
         for (const exam of myExams) {
           const res = await axios.get(`/exams/${exam.id}/results/`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -58,7 +58,7 @@ const TeacherResults = () => {
 
         setResults(allResults);
       } catch (err) {
-        console.error("❌ Failed to fetch exam results", err);
+        console.error("Failed to fetch exam results", err);
       } finally {
         setLoading(false);
       }
@@ -78,7 +78,7 @@ const TeacherResults = () => {
   return (
     <Box p={3}>
       <Typography variant="h5" gutterBottom>
-        📊 Exam Results for My Students
+        Exam Results
       </Typography>
 
       <Box display="flex" gap={2} mb={3}>
