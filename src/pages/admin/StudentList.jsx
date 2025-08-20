@@ -158,6 +158,7 @@ const StudentList = () => {
             <th>Email</th>
             <th>Class</th>
             <th>Phone</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -170,6 +171,13 @@ const StudentList = () => {
                 <td>{student.user.email}</td>
                 <td>{student.student_class}</td>
                 <td>{student.user.phone || student.phone}</td>
+                 <td>
+                    {student.status === "active" ? (
+                      <span className="badge bg-success">Active</span>
+                    ) : (
+                      <span className="badge bg-secondary">Inactive</span>
+                    )}
+                </td>
                 <td>
                   <button
                     className="btn btn-sm btn-warning me-2"

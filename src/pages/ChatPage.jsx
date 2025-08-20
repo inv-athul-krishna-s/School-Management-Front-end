@@ -25,7 +25,7 @@ const ChatPage = () => {
   const wsRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // 🔹 Load teacher's students (only once)
+  // Load teacher's students (only once)
   useEffect(() => {
     if (user?.role !== "teacher") return;
     const fetchStudents = async () => {
@@ -108,12 +108,12 @@ const ChatPage = () => {
     return () => socket.close();
   }, [chatId, token]);
 
-  // 🔹 Scroll to bottom on new messages
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🔹 Send message
+  // Send message
   const sendMessage = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN && input.trim()) {
       const payload = { content: input.trim() };
@@ -188,6 +188,43 @@ const ChatPage = () => {
 
       {/* Chat Window */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Header */}
+        {/* 🔹 Chat Header */}
+{chatId && (
+  <Box
+    sx={{
+      p: 2,
+      borderBottom: "1px solid #ddd",
+      bgcolor: "white",
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+    }}
+  >
+    {(() => {
+      const currentChat = chats.find((c) => c.id === chatId);
+      const otherUser = currentChat?.participants_detail?.find(
+        (p) => p.id !== user?.id
+      );
+
+      // Safely build the display name
+      const displayName =
+        otherUser?.first_name || otherUser?.last_name
+          ? `${otherUser?.first_name || ""} ${otherUser?.last_name || ""}`.trim()
+          : otherUser?.username || "Unknown";
+
+      return (
+        <>
+          <Avatar>
+            {displayName[0]?.toUpperCase() || "?"}
+          </Avatar>
+          <Typography variant="h6">{displayName}</Typography>
+        </>
+      );
+    })()}
+  </Box>
+)}
+
         {/* Messages */}
         <Box
           sx={{
