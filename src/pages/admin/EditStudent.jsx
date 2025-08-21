@@ -71,12 +71,12 @@ const EditStudent = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
       .then(() => {
-        alert("✅ Student updated!");
+        alert("Student updated!");
         navigate("/admin/dashboard/students");
       })
       .catch((err) => {
         console.error("Update failed:", err.response?.data || err.message);
-        alert("❌ Failed to update student.");
+        alert("Failed to update student.");
       });
   };
 

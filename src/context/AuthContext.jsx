@@ -11,7 +11,7 @@ function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const navigate = useNavigate();
 
-  // 🔹 Restore session on reload (per tab via sessionStorage)
+  // Restore session on reload (per tab via sessionStorage)
   useEffect(() => {
     const activeRole = sessionStorage.getItem("activeRole");
     if (!activeRole) return;
@@ -25,7 +25,7 @@ function AuthProvider({ children }) {
     }
   }, []);
 
-  // 🔹 Login
+  // Login
   async function login(username, password) {
     try {
       const res = await axios.post("/token/", { username, password });
@@ -52,7 +52,7 @@ function AuthProvider({ children }) {
     }
   }
 
-  // 🔹 Switch active role (inside same tab)
+  //  Switch active role (inside same tab)
   function switchRole(role) {
     const storedToken = sessionStorage.getItem(`${role}_token`);
     const storedUser = sessionStorage.getItem(`${role}_user`);
@@ -63,11 +63,11 @@ function AuthProvider({ children }) {
       sessionStorage.setItem("activeRole", role);
       navigate(`/${role}/dashboard`);
     } else {
-      console.warn(`⚠️ No session found for role: ${role}`);
+      console.warn(`No session found for role: ${role}`);
     }
   }
 
-  // 🔹 Logout
+  // Logout
   function logout(role = null) {
     if (role) {
       // Logout only selected role

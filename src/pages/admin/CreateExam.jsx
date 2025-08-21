@@ -94,17 +94,17 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
         await axios.put(`/exams/${examId}/`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        alert("✅ Exam updated successfully");
+        alert("Exam updated successfully");
       } else {
         await axios.post("/exams/", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        alert("✅ Exam created successfully");
+        alert("Exam created successfully");
       }
 
       navigate("/admin/dashboard/view-exams");
     } catch (err) {
-      console.error("❌ Exam submission failed:", err.response?.data || err.message);
+      console.error("Exam submission failed:", err.response?.data || err.message);
       alert("Failed to submit exam.");
     }
   };

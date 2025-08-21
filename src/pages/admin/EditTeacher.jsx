@@ -74,15 +74,15 @@ const EditTeacher = () => {
       await axios.patch(`/teachers/${id}/`, payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      alert("✅ Teacher updated!");
+      alert("Teacher updated!");
       navigate("/admin/dashboard/teachers");
     } catch (err) {
       if (err.response) {
         console.error("Update failed:", err.response.data);
-        alert("❌ Update failed: " + JSON.stringify(err.response.data));
+        alert("Update failed: " + JSON.stringify(err.response.data));
       } else {
         console.error("Update failed:", err);
-        alert("❌ Update failed. Please try again.");
+        alert("Update failed. Please try again.");
       }
     }
   };
