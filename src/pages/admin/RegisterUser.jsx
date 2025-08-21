@@ -1,4 +1,3 @@
-//RegisterUser.jsx
 import { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import {
@@ -9,50 +8,35 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
+import { useForm, Controller } from "react-hook-form";
+import ImportStudents from "./ImportStudents";
 
 const RegisterUser = () => {
   const [role, setRole] = useState("teacher");
+  const [mode, setMode] = useState("form");
   const [teachers, setTeachers] = useState([]);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
 
-  const [teacherData, setTeacherData] = useState({
-    username: "",
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    subject_specialization: "",
-    employee_id: "",
-    date_of_joining: "",
-    status: "active",
-  });
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm();
 
-  const [studentData, setStudentData] = useState({
-    username: "",
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    roll_number: "",
-    student_class: "",
-    date_of_birth: "",
-    admission_date: "",
-    status: "active",
-    assigned_teacher: "",
-  });
+  const selectedRole = watch("role", role); // watch role change
 
+  // Fetch teachers when student role is selected
   useEffect(() => {
     if (role === "student") {
       setLoadingTeachers(true);
       axios
         .get("/teachers/", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
         .then((res) => {
-          // ✅ Fix here: use `results` from paginated response
-          setTeachers(res.data.results || []);
+          setTeachers(res.data.results || res.data); // handle pagination or not
           setLoadingTeachers(false);
         })
         .catch((err) => {
@@ -62,65 +46,55 @@ const RegisterUser = () => {
     }
   }, [role]);
 
-  const handleTeacherSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      user: {
-        username: teacherData.username,
-        email: teacherData.email,
-        first_name: teacherData.first_name,
-        last_name: teacherData.last_name,
-        phone: teacherData.phone,
-      },
-      phone: teacherData.phone,
-      subject_specialization: teacherData.subject_specialization,
-      employee_id: teacherData.employee_id,
-      date_of_joining: teacherData.date_of_joining,
-      status: teacherData.status,
-    };
-
+  const onSubmit = async (data) => {
     try {
-      await axios.post("/teachers/", payload, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const userPayload = {
+        user: {
+          username: data.username,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone: data.phone,
+          password: data.password, 
         },
-      });
-      alert("Teacher registered successfully");
+        phone: data.phone,
+        status: data.status,
+      };
+
+      if (role === "teacher") {
+        const payload = {
+          ...userPayload,
+          subject_specialization: data.subject_specialization,
+          employee_id: data.employee_id,
+          date_of_joining: data.date_of_joining,
+        };
+
+        await axios.post("/teachers/", payload, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        alert("Teacher registered successfully");
+      } else {
+        const payload = {
+          ...userPayload,
+          roll_number: data.roll_number,
+          student_class: data.student_class,
+          date_of_birth: data.date_of_birth,
+          admission_date: data.admission_date,
+          assigned_teacher: data.assigned_teacher,
+        };
+
+        await axios.post("/students/", payload, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        alert("Student registered successfully");
+      }
+
+      reset();
     } catch (err) {
       console.error(err);
-      alert("Error registering teacher");
-    }
-  };
-
-  const handleStudentSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      user: {
-        username: studentData.username,
-        email: studentData.email,
-        first_name: studentData.first_name,
-        last_name: studentData.last_name,
-        phone: studentData.phone,
-      },
-      phone: studentData.phone,
-      roll_number: studentData.roll_number,
-      student_class: studentData.student_class,
-      date_of_birth: studentData.date_of_birth,
-      admission_date: studentData.admission_date,
-      status: studentData.status,
-      assigned_teacher: studentData.assigned_teacher,
-    };
-
-    try {
-      await axios.post("/students/", payload, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      alert("Student registered successfully");
-    } catch (err) {
-      console.error(err);
-      alert("Error registering student");
+      alert(`Error registering ${role}`);
     }
   };
 
@@ -136,93 +110,166 @@ const RegisterUser = () => {
         fullWidth
         label="Select Role"
         value={role}
-        onChange={(e) => setRole(e.target.value)}
+        onChange={(e) => {
+          setRole(e.target.value);
+          setMode("form");
+          reset(); // clear form on role switch
+        }}
         margin="normal"
       >
         <MenuItem value="teacher">Teacher</MenuItem>
         <MenuItem value="student">Student</MenuItem>
       </TextField>
 
-      {/* TEACHER FORM */}
-      {role === "teacher" && (
-        <form onSubmit={handleTeacherSubmit}>
-          {Object.keys(teacherData).map((key) => (
-            <TextField
-              key={key}
-              fullWidth
-              label={key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-              type={key.includes("date") ? "date" : "text"}
-              value={teacherData[key]}
-              onChange={(e) =>
-                setTeacherData({ ...teacherData, [key]: e.target.value })
-              }
-              margin="normal"
-              required
-              InputLabelProps={key.includes("date") ? { shrink: true } : {}}
+      {/* Toggle for CSV / Manual form (for students only) */}
+      {role === "student" && (
+        <Box display="flex" justifyContent="center" gap={2} my={2}>
+          <Button
+            variant={mode === "form" ? "contained" : "outlined"}
+            onClick={() => setMode("form")}
+          >
+            Fill Form Manually
+          </Button>
+          <Button
+            variant={mode === "csv" ? "contained" : "outlined"}
+            onClick={() => setMode("csv")}
+          >
+            Import via CSV
+          </Button>
+        </Box>
+      )}
+
+      {/* Form (teacher or student) */}
+      {mode === "form" && (
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Shared Fields including password */}
+          {["username", "email", "first_name", "last_name", "phone", "password"].map((field) => (
+            <Controller
+              key={field}
+              name={field}
+              control={control}
+              defaultValue=""
+              rules={{ required: true }}
+              render={({ field: controllerField }) => (
+                <TextField
+                  {...controllerField}
+                  fullWidth
+                  label={field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  margin="normal"
+                  type={field === "password" ? "password" : "text"} 
+                  helperText={errors[field] && "Required"}
+                />
+              )}
             />
           ))}
+
+          {/* Role-Specific Fields */}
+          {role === "teacher" && (
+            <>
+              {["subject_specialization", "employee_id", "date_of_joining"].map((field) => (
+                <Controller
+                  key={field}
+                  name={field}
+                  control={control}
+                  defaultValue=""
+                  rules={{ required: true }}
+                  render={({ field: controllerField }) => (
+                    <TextField
+                      {...controllerField}
+                      fullWidth
+                      label={field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                      type={field.includes("date") ? "date" : "text"}
+                      margin="normal"
+                      InputLabelProps={field.includes("date") ? { shrink: true } : {}}
+                      error={!!errors[field]}
+                      helperText={errors[field] && "Required"}
+                    />
+                  )}
+                />
+              ))}
+            </>
+          )}
+
+          {role === "student" && (
+            <>
+              {["roll_number", "student_class", "date_of_birth", "admission_date"].map((field) => (
+                <Controller
+                  key={field}
+                  name={field}
+                  control={control}
+                  defaultValue=""
+                  rules={{ required: true }}
+                  render={({ field: controllerField }) => (
+                    <TextField
+                      {...controllerField}
+                      fullWidth
+                      label={field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                      type={field.includes("date") ? "date" : "text"}
+                      margin="normal"
+                      InputLabelProps={field.includes("date") ? { shrink: true } : {}}
+                      error={!!errors[field]}
+                      helperText={errors[field] && "Required"}
+                    />
+                  )}
+                />
+              ))}
+
+              {/* Assigned Teacher Dropdown */}
+              <Controller
+                name="assigned_teacher"
+                control={control}
+                defaultValue=""
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    label="Assigned Teacher"
+                    margin="normal"
+                    error={!!errors.assigned_teacher}
+                    helperText={errors.assigned_teacher && "Required"}
+                  >
+                    {loadingTeachers ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} />
+                      </MenuItem>
+                    ) : teachers.length > 0 ? (
+                      teachers.map((teacher) => (
+                        <MenuItem value={teacher.id} key={teacher.id}>
+                          {teacher.user?.first_name} {teacher.user?.last_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No teachers available</MenuItem>
+                    )}
+                  </TextField>
+                )}
+              />
+            </>
+          )}
+
+          {/* Status Dropdown (shared) */}
+          <Controller
+            name="status"
+            control={control}
+            defaultValue="active"
+            render={({ field }) => (
+              <TextField {...field} select fullWidth label="Status" margin="normal">
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </TextField>
+            )}
+          />
+
           <Button type="submit" variant="contained" color="primary" fullWidth>
-            Register Teacher
+            Register {role.charAt(0).toUpperCase() + role.slice(1)}
           </Button>
         </form>
       )}
 
-      {/* STUDENT FORM */}
-      {role === "student" && (
-        <form onSubmit={handleStudentSubmit}>
-          {Object.keys(studentData).map((key) => {
-            if (key === "assigned_teacher") {
-              return (
-                <TextField
-                  key={key}
-                  select
-                  fullWidth
-                  label="Assigned Teacher"
-                  value={studentData[key]}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, [key]: e.target.value })
-                  }
-                  margin="normal"
-                  required
-                >
-                  {loadingTeachers ? (
-                    <MenuItem disabled>
-                      <CircularProgress size={20} />
-                    </MenuItem>
-                  ) : teachers.length > 0 ? (
-                    teachers.map((teacher) => (
-                      <MenuItem value={teacher.id} key={teacher.id}>
-                        {teacher.user?.first_name} {teacher.user?.last_name}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem disabled>No teachers available</MenuItem>
-                  )}
-                </TextField>
-              );
-            } else {
-              return (
-                <TextField
-                  key={key}
-                  fullWidth
-                  label={key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                  type={key.includes("date") ? "date" : "text"}
-                  value={studentData[key]}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, [key]: e.target.value })
-                  }
-                  margin="normal"
-                  required
-                  InputLabelProps={key.includes("date") ? { shrink: true } : {}}
-                />
-              );
-            }
-          })}
-          <Button type="submit" variant="contained" color="primary" fullWidth>
-            Register Student
-          </Button>
-        </form>
-      )}
+      {/* CSV Import Mode */}
+      {role === "student" && mode === "csv" && <ImportStudents />}
     </Box>
   );
 };

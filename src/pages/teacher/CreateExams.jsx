@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -13,7 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 
 const classOptions = Array.from({ length: 12 }, (_, i) => `${i + 1}`);
 
-const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
+const CreateExams = () => {
   const { token, user } = useAuth();
   const navigate = useNavigate();
 
@@ -31,18 +32,7 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
         ],
       },
     ],
-    ...defaultValues,
   });
-
-  useEffect(() => {
-    if (defaultValues && isEdit) {
-      setFormData({
-        ...formData,
-        ...defaultValues,
-      });
-    }
-    // eslint-disable-next-line
-  }, [defaultValues]);
 
   const handleQuestionChange = (index, field, value) => {
     const newQuestions = [...formData.questions];
@@ -82,37 +72,27 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
     e.preventDefault();
 
     const payload = {
-      title: formData.title,
-      target_class: formData.target_class,
-      start_time: formData.start_time,
-      duration_min: formData.duration_min,
-      questions: formData.questions,
+      ...formData,
+      created_by: user.id,
     };
 
     try {
-      if (isEdit && examId) {
-        await axios.put(`/exams/${examId}/`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        alert("Exam updated successfully");
-      } else {
-        await axios.post("/exams/", payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        alert("Exam created successfully");
-      }
+      await axios.post("/exams/", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      navigate("/admin/dashboard/view-exams");
+      alert("✅ Exam created successfully");
+      navigate("/teacher/dashboard/exams/manage");
     } catch (err) {
-      console.error("Exam submission failed:", err.response?.data || err.message);
-      alert("Failed to submit exam.");
+      console.error("❌ Exam creation failed:", err.response?.data || err.message);
+      alert("Failed to create exam.");
     }
   };
 
   return (
     <Box maxWidth="md" mx="auto" mt={4}>
       <Typography variant="h4" gutterBottom>
-        {isEdit ? "✏️ Edit Exam" : "📝 Create New Exam"}
+        📝 Create New Exam
       </Typography>
 
       <form onSubmit={handleSubmit}>
@@ -120,7 +100,6 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
           <TextField
             fullWidth
             label="Exam Title"
-            name="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             margin="normal"
@@ -174,6 +153,7 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
         {formData.questions.map((q, qIndex) => (
           <Paper key={qIndex} sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6">Question {qIndex + 1}</Typography>
+
             <TextField
               fullWidth
               label="Question Text"
@@ -230,11 +210,11 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
         </Button>
 
         <Button type="submit" variant="contained" color="success" sx={{ mt: 2 }}>
-          {isEdit ? "Update Exam" : "Create Exam"}
+          Create Exam
         </Button>
       </form>
     </Box>
   );
 };
 
-export default CreateExam;
+export default CreateExams;

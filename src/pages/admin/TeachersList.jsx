@@ -11,7 +11,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Pagination,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,7 +27,7 @@ import { useAuth } from "../../context/AuthContext";
 const TeachersList = () => {
   const [teachers, setTeachers] = useState([]);
   const [page, setPage] = useState(1);
-  const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [students, setStudents] = useState([]);
   const [openModal, setOpenModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
@@ -42,8 +41,10 @@ const TeachersList = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      setTeachers(res.data.results);
-      setCount(Math.ceil(res.data.count / 10));
+      setTeachers(res.data.results || []);
+      const total = res.data.count || 0;
+      const perPage = res.data.results.length || 1;
+      setTotalPages(Math.ceil(total / perPage));
     } catch (err) {
       console.error("Failed to fetch teachers:", err);
     }
@@ -56,7 +57,7 @@ const TeachersList = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      setStudents(res.data.results || res.data);
+      setStudents(res.data.results || res.data || []);
       setSelectedTeacher(teacher);
       setOpenModal(true);
     } catch (err) {
@@ -65,6 +66,9 @@ const TeachersList = () => {
   };
 
   const handleDeleteTeacher = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this teacher?");
+    if (!confirmDelete) return;
+
     try {
       await axios.delete(`/teachers/${id}/`, {
         headers: {
@@ -77,13 +81,64 @@ const TeachersList = () => {
     }
   };
 
-  const handlePageChange = (_, value) => {
-    setPage(value);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
   useEffect(() => {
     fetchTeachers(page);
   }, [page]);
+
+  const renderPagination = () => {
+    const pages = [];
+    const pageLimit = 3;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 || i === totalPages ||
+        (i >= page - 1 && i <= page + 1)
+      ) {
+        pages.push(i);
+      } else if (
+        (i === page - 2 && i > 1) ||
+        (i === page + 2 && i < totalPages)
+      ) {
+        pages.push("ellipsis");
+      }
+    }
+
+    return (
+      <ul className="pagination">
+        <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
+          <button className="page-link" onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
+            « Prev
+          </button>
+        </li>
+
+        {pages.map((p, idx) =>
+          p === "ellipsis" ? (
+            <li key={`ellipsis-${idx}`} className="page-item disabled">
+              <span className="page-link">…</span>
+            </li>
+          ) : (
+            <li key={p} className={`page-item ${page === p ? "active" : ""}`}>
+              <button className="page-link" onClick={() => handlePageChange(p)}>
+                {p}
+              </button>
+            </li>
+          )
+        )}
+
+        <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
+          <button className="page-link" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
+            Next »
+          </button>
+        </li>
+      </ul>
+    );
+  };
 
   return (
     <Box>
@@ -159,9 +214,12 @@ const TeachersList = () => {
         </Table>
       </TableContainer>
 
-      <Box mt={2} display="flex" justifyContent="center">
-        <Pagination count={count} page={page} onChange={handlePageChange} color="primary" />
-      </Box>
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <Box mt={2} display="flex" justifyContent="center">
+          <nav>{renderPagination()}</nav>
+        </Box>
+      )}
 
       {/* Students Modal */}
       <Dialog open={openModal} fullWidth maxWidth="md" onClose={() => setOpenModal(false)}>

@@ -8,23 +8,65 @@ import {
   ListItemText,
   Button,
   Paper,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";  // <-- Added useLocation
 
 const AvailableExams = () => {
   const [exams, setExams] = useState([]);
+  const [filter, setFilter] = useState("upcoming");
   const navigate = useNavigate();
+  const location = useLocation();  // <-- Get navigation state
 
   useEffect(() => {
-    axios
-      .get("/exams/", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-      .then((res) => setExams(res.data))
-      .catch((err) => console.error("Error fetching exams", err));
-  }, []);
+    const fetchExams = () => {
+      axios
+        .get("/exams/", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        .then((res) => {
+          const data = Array.isArray(res.data?.results) ? res.data.results : res.data;
+          setExams(data);
+        })
+        .catch((err) => console.error("Error fetching exams", err));
+    };
+
+    fetchExams();
+
+    // If redirected from AttemptExam with refresh flag
+    if (location.state?.refresh) {
+      fetchExams();
+      window.history.replaceState({}, document.title); // Clear refresh flag
+    }
+  }, [location]);
+
+  const now = new Date();
+
+  // Categorize exams based on time and attempts
+  const categorizedExams = exams.reduce(
+    (acc, exam) => {
+      const startTime = new Date(exam.start_time);
+      const endTime = new Date(startTime.getTime() + exam.duration_min * 60000);
+      const isAttempted = exam.attempts && exam.attempts.length > 0;
+
+      if (isAttempted) {
+        acc.finished.push(exam);
+      } else if (now < startTime) {
+        acc.upcoming.push(exam);
+      } else if (now > endTime) {
+        acc.unattempted.push(exam);
+      }
+      return acc;
+    },
+    { upcoming: [], unattempted: [], finished: [] }
+  );
+
+  const filteredExams = categorizedExams[filter] || [];
 
   return (
     <Box maxWidth="700px" mx="auto" mt={4}>
@@ -32,23 +74,52 @@ const AvailableExams = () => {
         Available Exams
       </Typography>
 
-      {exams.length === 0 ? (
-        <Typography>No exams available right now.</Typography>
+      {/* Filter Dropdown */}
+      <FormControl fullWidth sx={{ my: 2 }}>
+        <InputLabel id="exam-filter-label">Filter Exams</InputLabel>
+        <Select
+          labelId="exam-filter-label"
+          value={filter}
+          label="Filter Exams"
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <MenuItem value="upcoming">Upcoming Exams</MenuItem>
+          <MenuItem value="unattempted">Unattempted Exams</MenuItem>
+          <MenuItem value="finished">Finished Exams</MenuItem>
+        </Select>
+      </FormControl>
+
+      {filteredExams.length === 0 ? (
+        <Typography>No exams found for this category.</Typography>
       ) : (
         <List>
-          {exams.map((exam) => (
+          {filteredExams.map((exam) => (
             <Paper key={exam.id} sx={{ my: 2, p: 2 }}>
               <ListItem>
                 <ListItemText
                   primary={exam.title}
-                  secondary={`Created by: ${exam.teacher.user.first_name} | Class: ${exam.target_class}`}
+                  secondary={`Class: ${exam.target_class}`}
                 />
-                <Button
-                  variant="contained"
-                  onClick={() => navigate(`/student/dashboard/exam/${exam.id}`)}
-                >
-                  Start
-                </Button>
+                {filter === "upcoming" && (
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      navigate(`/student/dashboard/exams/${exam.id}`)
+                    }
+                  >
+                    Start
+                  </Button>
+                )}
+                {filter === "unattempted" && (
+                  <Typography variant="body2" color="error">
+                    Not Attempted
+                  </Typography>
+                )}
+                {filter === "finished" && (
+                  <Typography variant="body2" color="textSecondary">
+                    Attempted
+                  </Typography>
+                )}
               </ListItem>
             </Paper>
           ))}

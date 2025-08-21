@@ -1,48 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
+  Typography,
   TextField,
   Button,
-  Typography,
   MenuItem,
   Paper,
 } from "@mui/material";
 import axios from "../../api/axios";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const classOptions = Array.from({ length: 12 }, (_, i) => `${i + 1}`);
 
-const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
-  const { token, user } = useAuth();
+const EditExam = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   const [formData, setFormData] = useState({
     title: "",
     target_class: "",
     start_time: "",
     duration_min: "",
-    questions: [
-      {
-        text: "",
-        options: [
-          { text: "", is_correct: false },
-          { text: "", is_correct: false },
-        ],
-      },
-    ],
-    ...defaultValues,
+    questions: [],
   });
 
   useEffect(() => {
-    if (defaultValues && isEdit) {
-      setFormData({
-        ...formData,
-        ...defaultValues,
+    axios
+      .get(`/exams/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setFormData(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to load exam:", err);
+        alert("Error loading exam.");
       });
-    }
-    // eslint-disable-next-line
-  }, [defaultValues]);
+  }, [id, token]);
 
   const handleQuestionChange = (index, field, value) => {
     const newQuestions = [...formData.questions];
@@ -90,29 +86,21 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
     };
 
     try {
-      if (isEdit && examId) {
-        await axios.put(`/exams/${examId}/`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        alert("Exam updated successfully");
-      } else {
-        await axios.post("/exams/", payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        alert("Exam created successfully");
-      }
-
-      navigate("/admin/dashboard/view-exams");
+      await axios.put(`/exams/${id}/`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("✅ Exam updated successfully!");
+      navigate("/teacher/dashboard/exams/manage");
     } catch (err) {
-      console.error("Exam submission failed:", err.response?.data || err.message);
-      alert("Failed to submit exam.");
+      console.error("❌ Update failed:", err.response?.data || err.message);
+      alert("Failed to update exam.");
     }
   };
 
   return (
     <Box maxWidth="md" mx="auto" mt={4}>
       <Typography variant="h4" gutterBottom>
-        {isEdit ? "✏️ Edit Exam" : "📝 Create New Exam"}
+        ✏️ Edit Exam
       </Typography>
 
       <form onSubmit={handleSubmit}>
@@ -230,11 +218,11 @@ const CreateExam = ({ examId = null, defaultValues = {}, isEdit = false }) => {
         </Button>
 
         <Button type="submit" variant="contained" color="success" sx={{ mt: 2 }}>
-          {isEdit ? "Update Exam" : "Create Exam"}
+          Save Changes
         </Button>
       </form>
     </Box>
   );
 };
 
-export default CreateExam;
+export default EditExam;
